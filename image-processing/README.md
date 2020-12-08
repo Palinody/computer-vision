@@ -12,7 +12,7 @@ do: all the rest...
 
 ### Compilation
 ```sh
-$ g++-10 -std=c++20 -Wall -O3 -march=native -o main main.cpp
+$ g++-10 -std=c++20 -Wall -O3 -ffast-math -march=native -o main main.cpp -lpng
 $ ./a.out
 ```
 
