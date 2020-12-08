@@ -2,8 +2,11 @@
 
 ### TODO
 fix: clang++
+
 fix: fft works with images with limited size on my machine: approx. 900x900x4 (no memory optim.)
+
 add: gray and gray + alpha bitmaps (rest of lib already took them into consideration, no mod. needed)
+
 do: all the rest...
 
 
@@ -20,8 +23,8 @@ $ ./a.out
 
 ### Custom containers
 - PixelMap<png_byte>: color channels read/wrote via indexing
-- BitMapRGBA: color channels read/wrote via bit shifting (channels fixed to 4)
-- BitMapRGB: color channels read/wrote via bit shifting (channels fixed to 3)
+- BitMapRGBA: color channels read/wrote via bit shifting (channels fixed to 4, type fixed to uint32_t)
+- BitMapRGB: color channels read/wrote via bit shifting (channels fixed to 3, type fixed to uint32_t)
 - MipMap: Pyramid of previous image containers
 
 ### Streams
