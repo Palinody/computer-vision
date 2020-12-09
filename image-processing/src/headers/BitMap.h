@@ -10,6 +10,7 @@
 #include <memory>
 // debug
 #include <iostream>
+#include <vector>
 
 #include "PRNG.h"
 
@@ -340,8 +341,8 @@ PixelMap<T>& PixelMap<T>::subtract(const PixelMap<T>& other){
 
     assert(has_same_dims_as(other));
 
-    uint16_t min_val[_channels];
-    uint16_t max_val[_channels];
+    std::vector<uint16_t> min_val(_channels);
+    std::vector<uint16_t> max_val(_channels);
     #ifdef _OPENMP
         #pragma omp for simd
     #endif
@@ -350,7 +351,8 @@ PixelMap<T>& PixelMap<T>::subtract(const PixelMap<T>& other){
         #pragma omp for simd
     #endif
     for(size_t c = 0; c < _channels; ++c) max_val[c] = 0;
-    uint16_t buf[_width*_height*_channels];
+
+    std::vector<uint16_t> buf(_width*_height*_channels);
     #ifdef _OPENMP
         #pragma omp parallel for simd collapse(3)
     #endif
@@ -569,7 +571,7 @@ BitMapRGBA& BitMapRGBA::subtract_rgb(const BitMapRGBA& other){
 
     uint64_t min_val = 0x000001fe01fe01fe;
     uint64_t max_val = 0x0;
-    uint64_t buf[_width*_height] = {  };
+    std::vector<uint64_t> buf(_width*_height, 0);
     for(size_t n = 0; n < _width*_height; ++n) buf[n] = 0x000000ff00ff00ff;
     
     const uint32_t *this_it = begin();
@@ -615,7 +617,7 @@ BitMapRGBA& BitMapRGBA::subtract_rgba(const BitMapRGBA& other){
 
     uint64_t min_val = 0x01fe01fe01fe01fe;
     uint64_t max_val = 0x0;
-    uint64_t buf[_width*_height] = {  };
+    std::vector<uint64_t> buf(_width*_height, 0);
     for(size_t n = 0; n < _width*_height; ++n) buf[n] = 0x00ff00ff00ff00ff;
     
     const uint32_t *this_it = begin();
@@ -964,7 +966,7 @@ BitMapRGB& BitMapRGB::subtract(const BitMapRGB& other){
 
     uint64_t min_val = 0x01fe01fe01fe;
     uint64_t max_val = 0x0;
-    uint64_t buf[_width*_height] = {  };
+    std::vector<uint64_t> buf(_width*_height, 0);
     for(size_t n = 0; n < _width*_height; ++n) buf[n] = 0x00ff00ff00ff;
     
     const uint32_t *this_it = begin();

@@ -4,6 +4,8 @@
 #include <deque>
 #include <type_traits>
 #include <algorithm>
+#include <vector>
+
 /**
  * T: image type
  * P: element of channel type (currently no effect if bitmap)
@@ -26,27 +28,27 @@ public:
      * a diff. numb. of arguments to construct an object
     */
     // used for PixelMap<png_byte>
-    MipMap(const imgType& img) requires(std::is_same_v<imgType, PixelMap<png_byte>>);
+    MipMap(const T& img) requires(std::is_same_v<T, PixelMap<png_byte>>);
     // used for all the BitMaps
-    MipMap(const imgType& img) requires(!std::is_same_v<imgType, PixelMap<png_byte>>);
+    MipMap(const T& img) requires(!std::is_same_v<T, PixelMap<png_byte>>);
 
     inline size_t getOctaves() const;
-    void get_interpolated_img(float ratio) const requires(std::is_same_v<imgType, PixelMap<png_byte>>);
-    void get_interpolated_img(float ratio) const requires(!std::is_same_v<imgType, PixelMap<png_byte>>);
+    void get_interpolated_img(float ratio) const requires(std::is_same_v<T, PixelMap<png_byte>>);
+    void get_interpolated_img(float ratio) const requires(!std::is_same_v<T, PixelMap<png_byte>>);
 
     inline T& operator[](size_t idx);
     inline const T& operator[](size_t idx) const;
 
-    void savefig(std::string_view filename) const requires(std::is_same_v<imgType, PixelMap<png_byte>>);
-    void savefig(std::string_view filename) const requires(!std::is_same_v<imgType, PixelMap<png_byte>>);
+    void savefig(std::string_view filename) const requires(std::is_same_v<T, PixelMap<png_byte>>);
+    void savefig(std::string_view filename) const requires(!std::is_same_v<T, PixelMap<png_byte>>);
 
 public:
-    std::deque<imgType> _mipmap;
+    std::deque<T> _mipmap;
     size_t _octaves = 0;
 };
 
-template<typename imgType>
-MipMap<imgType>::MipMap(const imgType& img) requires(std::is_same_v<imgType, PixelMap<png_byte>>) 
+template<typename T>
+MipMap<T>::MipMap(const T& img) requires(std::is_same_v<T, PixelMap<png_byte>>) 
         : _mipmap{ img }, _octaves{ 1 } {
     
     size_t shortest_dim = std::min(img.getHeight(), img.getWidth());
@@ -69,14 +71,12 @@ MipMap<imgType>::MipMap(const imgType& img) requires(std::is_same_v<imgType, Pix
     }while(res.getHeight() > 1 && res.getWidth() > 1);
 
     printf("stored height dimensions\n");
-    for(const auto& h : dims_h) printf("%ld, ", h); 
-    printf("\n");
-    for(const auto& w : dims_w) printf("%ld, ", w); 
-    printf("\n");
+    for(const auto& h : dims_h) printf("%ld, ", h); printf("\n");
+    for(const auto& w : dims_w) printf("%ld, ", w); printf("\n");
 }
 
-template<typename imgType>
-MipMap<imgType>::MipMap(const imgType& img) requires(!std::is_same_v<imgType, PixelMap<png_byte>>) 
+template<typename T>
+MipMap<T>::MipMap(const T& img) requires(!std::is_same_v<T, PixelMap<png_byte>>) 
         : _mipmap{ img }, _octaves{ 1 } {
     
     size_t shortest_dim = std::min(img.getHeight(), img.getWidth());
@@ -103,7 +103,7 @@ size_t MipMap<T>::getOctaves() const{
         min_dim = min(ref_img.height, ref_img.width)
 */
 template<typename T>
-void MipMap<T>::get_interpolated_img(float ratio) const requires(std::is_same_v<imgType, PixelMap<png_byte>>){
+void MipMap<T>::get_interpolated_img(float ratio) const requires(std::is_same_v<T, PixelMap<png_byte>>){
     size_t height_des = ratio * _mipmap.at(0).getHeight();
     size_t width_des = ratio * _mipmap.at(0).getWidth();
     size_t shortest_dim = std::min(height_des, width_des);
@@ -119,7 +119,7 @@ void MipMap<T>::get_interpolated_img(float ratio) const requires(std::is_same_v<
 }
 
 template<typename T>
-void MipMap<T>::get_interpolated_img(float ratio) const requires(!std::is_same_v<imgType, PixelMap<png_byte>>){
+void MipMap<T>::get_interpolated_img(float ratio) const requires(!std::is_same_v<T, PixelMap<png_byte>>){
     printf("wrong function pendejo\n");
     return;
 }
@@ -131,7 +131,7 @@ template<typename T>
 const T& MipMap<T>::operator[](size_t idx) const{ return _mipmap[idx]; }
 
 template<typename T>
-void MipMap<T>::savefig(std::string_view filename) const requires(std::is_same_v<imgType, PixelMap<png_byte>>){
+void MipMap<T>::savefig(std::string_view filename) const requires(std::is_same_v<T, PixelMap<png_byte>>){
 
     size_t channels_tot = _mipmap.at(0).getChannels();
     size_t width_tot = 0;
@@ -142,7 +142,7 @@ void MipMap<T>::savefig(std::string_view filename) const requires(std::is_same_v
     // height of the largest image in the mipmap
     size_t height_offset = _mipmap.at(0).getHeight();
     // need array of widths since offsets vary. Initialise first width offset
-    size_t width_offset[_mipmap.size()] = { 0 };
+    std::vector<size_t> width_offset(_mipmap.size(), 0);
     // accumulate the sum of widths
     for(size_t n = 1; n < _mipmap.size(); ++n)
         width_offset[n] = width_offset[n-1] + _mipmap.at(n-1).getWidth();
@@ -215,7 +215,7 @@ void MipMap<T>::savefig(std::string_view filename) const requires(std::is_same_v
 }
 
 template<typename T>
-void MipMap<T>::savefig(std::string_view filename) const requires(!std::is_same_v<imgType, PixelMap<png_byte>>){
+void MipMap<T>::savefig(std::string_view filename) const requires(!std::is_same_v<T, PixelMap<png_byte>>){
 
     // START: BitMap -> PixelMap (conversion)
     std::deque<PixelMap<png_byte>> pixelmaps;
@@ -236,7 +236,7 @@ void MipMap<T>::savefig(std::string_view filename) const requires(!std::is_same_
     // height of the largest image in the mipmap
     size_t height_offset = pixelmaps.at(0).getHeight();
     // need array of widths since offsets vary. Initialise first width offset
-    size_t width_offset[pixelmaps.size()] = { 0 };
+    std::vector<size_t> width_offset(pixelmaps.size(), 0);
     // accumulate the sum of widths
     for(size_t n = 1; n < pixelmaps.size(); ++n)
         width_offset[n] = width_offset[n-1] + pixelmaps.at(n-1).getWidth();

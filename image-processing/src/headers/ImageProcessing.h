@@ -3,6 +3,8 @@
 #include "PngParser.h"
 #include "Kernel.h"
 
+#include <vector>
+
 namespace rescale{
 
 #define CLAMP(p, inf, sup) if(p < inf) { p = inf; } else if(p > sup) { p = sup; }
@@ -19,10 +21,13 @@ void avg(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
     size_t ker_w = src.getWidth()  - (new_width  - 1) % src.getWidth();
     size_t surface = ker_h * ker_w;
 
+    // size_t: each elem. of priv_buf needs enough mem. to accumulate values
+    std::vector<size_t> priv_buf(new_channels, 0);
+
     for(size_t new_i = 0; new_i < new_height; ++new_i){
         for(size_t new_j = 0; new_j < new_width; ++new_j){
-            // size_t: each elem. of priv_buf needs enough mem. to accumulate values
-            size_t priv_buf[new_channels] = {  };
+            
+            std::fill(priv_buf.begin(), priv_buf.end(), 0);
             for(size_t ker_i = 0; ker_i < ker_h; ++ker_i){
                 for(size_t ker_j = 0; ker_j < ker_w; ++ker_j){
                     for(size_t c = 0; c < new_channels; ++c){
@@ -50,10 +55,13 @@ void box(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
     size_t ker_w = 2;
     size_t surface = ker_h * ker_w;
 
+    // size_t: each elem. of priv_buf needs enough mem. to accumulate values
+    std::vector<size_t> priv_buf(new_channels, 0);
+
     for(size_t new_i = 0; new_i < new_height; ++new_i){
         for(size_t new_j = 0; new_j < new_width; ++new_j){
-            // size_t: each elem. of priv_buf needs enough mem. to accumulate values
-            size_t priv_buf[new_channels] = {  };
+
+            std::fill(priv_buf.begin(), priv_buf.end(), 0);
             for(size_t ker_i = 0; ker_i < ker_h; ++ker_i)
                 for(size_t ker_j = 0; ker_j < ker_w; ++ker_j)
                     for(size_t c = 0; c < new_channels; ++c)
@@ -79,8 +87,8 @@ void nearestNeighbor(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
     size_t w_ratio = (orig_width << 32) / new_w + 1;
 
     // precomp. lookup table that maps new image pos. to orig. image pos.
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
     for(size_t i = 0; i < new_h; ++i) h_orig_table[i] = ((i * h_ratio) >> 32);
     for(size_t j = 0; j < new_w; ++j) w_orig_table[j] = ((j * w_ratio) >> 32);
 
@@ -112,8 +120,8 @@ void nearestNeighbor(BitMapRGBA& dest, const BitMapRGBA& src){
     size_t w_ratio = (orig_width << 32) / new_w + 1;
 
     // precomp. lookup table that maps new image pos. to orig. image pos.
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
     for(size_t i = 0; i < new_h; ++i) h_orig_table[i] = ((i * h_ratio) >> 32);
     for(size_t j = 0; j < new_w; ++j) w_orig_table[j] = ((j * w_ratio) >> 32);
 
@@ -141,8 +149,8 @@ void nearestNeighbor(BitMapRGB& dest, const BitMapRGB& src){
     size_t w_ratio = (orig_width << 32) / new_w + 1;
 
     // precomp. lookup table that maps new image pos. to orig. image pos.
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
     for(size_t i = 0; i < new_h; ++i) h_orig_table[i] = ((i * h_ratio) >> 32);
     for(size_t j = 0; j < new_w; ++j) w_orig_table[j] = ((j * w_ratio) >> 32);
 
@@ -170,10 +178,10 @@ void bilinear(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
     float w_ratio = static_cast<float>(orig_width-1) / new_w;
     
     // precompute values (a little bit faster)
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
-    float dh_orig_table[new_h];
-    float dw_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
+    std::vector<float> dh_orig_table(new_h);
+    std::vector<float> dw_orig_table(new_w);
     for(size_t i = 0; i < new_h; ++i){
         h_orig_table[i] = i * h_ratio;
         dh_orig_table[i] = h_ratio * i - h_orig_table[i];
@@ -225,10 +233,10 @@ void bilinear(BitMapRGBA& dest, const BitMapRGBA& src){
     float w_ratio = static_cast<float>(orig_width-1) / new_w;
     
     // precompute values (a little bit faster)
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
-    float dh_orig_table[new_h];
-    float dw_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
+    std::vector<float> dh_orig_table(new_h);
+    std::vector<float> dw_orig_table(new_w);
     for(size_t i = 0; i < new_h; ++i){
         h_orig_table[i] = i * h_ratio;
         dh_orig_table[i] = h_ratio * i - h_orig_table[i];
@@ -293,10 +301,10 @@ void bilinear(BitMapRGB& dest, const BitMapRGB& src){
     float w_ratio = static_cast<float>(orig_width-1) / new_w;
     
     // precompute values (a little bit faster)
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
-    float dh_orig_table[new_h];
-    float dw_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
+    std::vector<float> dh_orig_table(new_h);
+    std::vector<float> dw_orig_table(new_w);
     for(size_t i = 0; i < new_h; ++i){
         h_orig_table[i] = i * h_ratio;
         dh_orig_table[i] = h_ratio * i - h_orig_table[i];
@@ -602,10 +610,10 @@ void bicubic(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
     float w_ratio = static_cast<float>(orig_width-1) / new_w;
 
     // precompute values (a little bit faster)
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
-    float dh_orig_table[new_h];
-    float dw_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
+    std::vector<float> dh_orig_table(new_h);
+    std::vector<float> dw_orig_table(new_w);
     #ifdef _OPENMP
         #pragma omp simd
     #endif
@@ -683,10 +691,10 @@ void bicubic_loop(BitMapRGBA& dest, const BitMapRGBA& src){
     float w_ratio = static_cast<float>(orig_width-1) / new_w;
 
     // precompute values (a little bit faster)
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
-    float dh_orig_table[new_h];
-    float dw_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
+    std::vector<float> dh_orig_table(new_h);
+    std::vector<float> dw_orig_table(new_w);
     #ifdef _OPENMP
         #pragma omp simd
     #endif
@@ -761,10 +769,10 @@ void bicubic(BitMapRGBA& dest, const BitMapRGBA& src){
     float w_ratio = static_cast<float>(orig_width-1) / new_w;
 
     // precompute values (a little bit faster)
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
-    float dh_orig_table[new_h];
-    float dw_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
+    std::vector<float> dh_orig_table(new_h);
+    std::vector<float> dw_orig_table(new_w);
     #ifdef _OPENMP
         #pragma omp simd
     #endif
@@ -858,10 +866,10 @@ void bicubic(BitMapRGB& dest, const BitMapRGB& src){
     float w_ratio = static_cast<float>(orig_width-1) / new_w;
 
     // precompute values (a little bit faster)
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
-    float dh_orig_table[new_h];
-    float dw_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
+    std::vector<float> dh_orig_table(new_h);
+    std::vector<float> dw_orig_table(new_w);
     #ifdef _OPENMP
         #pragma omp simd
     #endif
@@ -963,14 +971,14 @@ void bicubic_cache(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
     float a30, a31, a32, a33;
 
     // precompute values (a little bit faster)
-    size_t h_orig_table[new_h];
-    size_t w_orig_table[new_w];
-    float dh_orig_table[new_h];
-    float dw_orig_table[new_w];
-    float dh2_orig_table[new_h];
-    float dw2_orig_table[new_w];
-    float dh3_orig_table[new_h];
-    float dw3_orig_table[new_w];
+    std::vector<size_t> h_orig_table(new_h);
+    std::vector<size_t> w_orig_table(new_w);
+    std::vector<float> dh_orig_table(new_h);
+    std::vector<float> dw_orig_table(new_w);
+    std::vector<float> dh2_orig_table(new_h);
+    std::vector<float> dw2_orig_table(new_w);
+    std::vector<float> dh3_orig_table(new_h);
+    std::vector<float> dw3_orig_table(new_w);
     for(size_t i = 0; i < new_h; ++i){
         h_orig_table[i] = i * h_ratio;
         dh_orig_table[i] = h_ratio * i - h_orig_table[i];
@@ -984,7 +992,6 @@ void bicubic_cache(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
         dw3_orig_table[j] = dw2_orig_table[j] * dw_orig_table[j];
     }
     
-
     float pixel_v_c;
     #ifdef _OPENMP
         #pragma omp parallel for simd collapse(3)
@@ -1220,6 +1227,8 @@ void fft_h(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel
     size_t k_l_2_a = (ker_len-1) / 2;
     size_t k_l_2_b = ker_len / 2;
 
+    std::vector<T> priv_buf(new_channels, 0);
+
     #ifdef _OPENMP
         #pragma omp parallel for
     #endif
@@ -1227,7 +1236,8 @@ void fft_h(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel
     for(size_t i = 0; i < new_height; ++i){
         // part1
         for(size_t j = 0; j < k_l_2_a; ++j){
-            T priv_buf[new_channels] = {  };
+
+            std::fill(priv_buf.begin(), priv_buf.end(), 0);
             //#pragma omp simd reduction(+:priv_buf)
             for(size_t idx = k_l_2_a; idx < ker_len; ++idx){
                 for(size_t c = 0; c < new_channels; ++c){
@@ -1241,7 +1251,7 @@ void fft_h(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel
         }
         // part2
         for(size_t j = k_l_2_a; j < new_width-k_l_2_b; ++j){
-            T priv_buf[new_channels] = {  };
+            std::fill(priv_buf.begin(), priv_buf.end(), 0);
             //#pragma omp simd reduction(+:priv_buf)
             for(size_t idx = 0; idx < ker_len; ++idx){
                 for(size_t c = 0; c < new_channels; ++c){
@@ -1254,7 +1264,7 @@ void fft_h(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel
         }
         // part3
         for(size_t j = new_width-k_l_2_b; j < new_width; ++j){
-            T priv_buf[new_channels] = {  };
+            std::fill(priv_buf.begin(), priv_buf.end(), 0);
             //#pragma omp simd reduction(+:priv_buf)
             for(size_t idx = 0; idx < k_l_2_b; ++idx){
                 for(size_t c = 0; c < new_channels; ++c){
@@ -1289,8 +1299,8 @@ void fft_h2(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kerne
     size_t k_l_2_a = (ker_len-1) / 2;
     size_t k_l_2_b = ker_len / 2;
 
-    size_t offset_table[new_width];
-    size_t size_table[new_width];
+    std::vector<size_t> offset_table(new_width, 0);
+    std::vector<size_t> size_table(new_width, 0);
     #ifdef _OPENMP
         #pragma omp simd
     #endif
@@ -1312,14 +1322,17 @@ void fft_h2(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kerne
         offset_table[j] = k_l_2_a;
         size_table[j] = k_l_2_a + new_width - j;
     }
+
+    std::vector<T> priv_buf(new_channels, 0);
     #ifdef _OPENMP
         #pragma omp parallel for collapse(2)
     #endif
     for(size_t i = 0; i < new_height; ++i){
         for(size_t j = 0; j < new_width; ++j){
+            
             size_t l_offset = offset_table[j];
             size_t ker_size = size_table[j];
-            T priv_buf[new_channels] = {  };
+            std::fill(priv_buf.begin(), priv_buf.end(), 0);
             for(size_t k = 0; k < ker_size; ++k){
                 for(size_t c = 0; c < new_channels; ++c){
                     priv_buf[c] += src(i, j-l_offset+k, c) * kernel(k_l_2_a-l_offset+k, c);
@@ -1410,8 +1423,8 @@ void fft_h2(BitMapRGBA& dest, const BitMapRGBA& src, const Kernel1D<T>& kernel){
     size_t k_l_2_a = (ker_len-1) / 2;
     size_t k_l_2_b = ker_len / 2;
 
-    size_t offset_table[new_width];
-    size_t size_table[new_width];
+    std::vector<size_t> offset_table(new_width, 0);
+    std::vector<size_t> size_table(new_width, 0);
     #ifdef _OPENMP
         #pragma omp simd
     #endif
