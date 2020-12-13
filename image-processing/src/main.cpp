@@ -126,7 +126,7 @@ float nearestNeighbor(){
     uint64_t elapsed = timer.elapsed();
     printf("Computation time (nearest neighbor): %.5f s\n", (elapsed*1e-9f));
 
-    //write_png_file(to_file, dest);
+    write_png_file(to_file, dest);
     return (elapsed*1e-9f);
 }
 
@@ -149,7 +149,7 @@ float nearestNeighbor_bitmap_rgba(){
     uint64_t elapsed = timer.elapsed();
     printf("Computation time (nearest neighbor - bitmap - rgba): %.5f s\n", (elapsed*1e-9f));
 
-    //write_png_file(to_file, dest);
+    write_png_file(to_file, dest);
     return (elapsed*1e-9f);
 }
 
@@ -172,7 +172,7 @@ float nearestNeighbor_bitmap_rgb(){
     uint64_t elapsed = timer.elapsed();
     printf("Computation time (nearest neighbor - bitmap - rgb): %.5f s\n", (elapsed*1e-9f));
 
-    //write_png_file(to_file, dest);
+    write_png_file(to_file, dest);
     return (elapsed*1e-9f);
 }
 
@@ -198,7 +198,7 @@ float bilinear(){
     uint64_t elapsed = timer.elapsed();
     printf("Computation time (bilinear): %.5f s\n", (elapsed*1e-9f));
 
-    //write_png_file(to_file, dest);
+    write_png_file(to_file, dest);
     return (elapsed*1e-9f);
 }
 
@@ -221,7 +221,7 @@ float bilinear_bitmap_rgba(){
     uint64_t elapsed = timer.elapsed();
     printf("Computation time (bilinear - bitmap - rgba): %.5f s\n", (elapsed*1e-9f));
 
-    //write_png_file(to_file, dest);
+    write_png_file(to_file, dest);
     return (elapsed*1e-9f);
 }
 
@@ -244,7 +244,7 @@ float bilinear_bitmap_rgb(){
     uint64_t elapsed = timer.elapsed();
     printf("Computation time (bilinear - bitmap - rgb): %.5f s\n", (elapsed*1e-9f));
 
-    //write_png_file(to_file, dest);
+    write_png_file(to_file, dest);
     return (elapsed*1e-9f);
 }
 
@@ -271,7 +271,7 @@ float bicubic(){
 
     uint64_t elapsed = timer.elapsed();
     printf("Computation time (bicubic): %.5f s\n", (elapsed*1e-9f));
-    //write_png_file(to_file, dest);
+    write_png_file(to_file, dest);
     return (elapsed*1e-9f);
 }
 
@@ -294,7 +294,7 @@ float bicubic_bitmap_rgba(){
     uint64_t elapsed = timer.elapsed();
     printf("Computation time (bicubic - bitmap - rgba): %.5f s\n", (elapsed*1e-9f));
 
-    //write_png_file(to_file, dest);
+    write_png_file(to_file, dest);
     return (elapsed*1e-9f);
 }
 
@@ -317,7 +317,7 @@ float bicubic_bitmap_rgb(){
     uint64_t elapsed = timer.elapsed();
     printf("Computation time (bicubic - bitmap - rgb): %.5f s\n", (elapsed*1e-9f));
 
-    //write_png_file(to_file, dest);
+    write_png_file(to_file, dest);
     return (elapsed*1e-9f);
 }
 
@@ -486,7 +486,7 @@ float difference_of_gaussians_rgb(){
 }
 
 void plot_mipmap(){
-    std::string_view from_file {"../../test-database/original/000369_left.png"};
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
     std::string_view to_file {"../../test-database/mip_map.png"};
 
     png_dims dims = getDims(from_file);
@@ -496,40 +496,70 @@ void plot_mipmap(){
 
     //MipMap<BitMapRGBA> mipmap(bitmap);
     MipMap<PixelMap<png_byte>> mipmap(pixelmap);
+
     printf("mipmap octaves: %ld\n", mipmap.getOctaves());
     mipmap.savefig(to_file);
 }
 
-void setFileName(std::string& path, int idx){
+inline std::string getFileName(std::string path, int idx){
     char fname_ext[6];
     sprintf(fname_ext, "%05d", idx);
     path += std::string(fname_ext) + ".png";
+
+    return path;
 }
-/*
+
 void generate_goomer(){
-    std::string_view from_file {"../../test-database/other_database/coomba.png"};
-    std::string to_path {"../../test-database/mip_map"};
+    printf("----------------------------\n");
+    std::string_view from_file {"../../test-database/original/000369_left.png"};
+    std::string to_path {"../../test-database/mip_map/"};
     png_dims dims = getDims(from_file);
     PixelMap<png_byte> pixelmap(dims.height, dims.width, dims.channels);
     read_png_file(from_file, pixelmap);
 
     MipMap<PixelMap<png_byte>> mipmap(pixelmap);
     
-    // image area
-    
-    size_t height_sup = mipmap[0].getHeight();
-    size_t width_sup = mipmap[0].getWidth();
-    size_t min_dim = std::min(height_sup, width_sup);
+    //size_t height_sup = mipmap[0].getHeight();
+    //size_t width_sup = mipmap[0].getWidth();
+    size_t channels = mipmap[0].getChannels();
 
-    for(size_t ratio = 1; ratio < min_dim; ++ratio){
-        //printf("%f\n", (ratio/static_cast<float>(min_dim)));
-        //mipmap.get_interpolated_img(ratio/static_cast<float>(min_dim));
+    std::deque<PixelMap<png_byte>>::const_reverse_iterator it_r = mipmap.rbegin();
+    std::deque<PixelMap<png_byte>>::const_reverse_iterator it_rend = mipmap.rend();
+    
+    PixelMap<png_byte> scale_target = *(it_rend-1); //(height_sup*0.5, width_sup*0.5, channels);
+
+    size_t counter = 0;
+    // keeps track of already visited dimensions (we continue loop if already visited)
+    size_t mem_h = 0;
+    size_t mem_w = 0;
+    for(size_t i = 0; it_r != it_rend-1; ++it_r, ++i){
+        size_t h = it_r->getHeight();
+        size_t w = it_r->getWidth();
+        size_t h_next = std::next(it_r)->getHeight();
+        size_t w_next = std::next(it_r)->getWidth();
+        size_t dh = h_next - h;
+        size_t dw = w_next - w;
+        size_t surface = dh * dw;
+        
+        for(size_t r = 0; r < surface; ++r){
+            size_t new_h = h + r / static_cast<float>(dw);
+            size_t new_w = w + r / static_cast<float>(dh);
+            if(new_h == mem_h && new_w == mem_w) continue;
+            else{
+                std::string s = getFileName(to_path, counter);
+                std::cout << "writing in: " << s << std::endl;
+                PixelMap<png_byte> scale_curr(new_h, new_w, channels);
+                
+                rescale::trilinear(scale_curr, *it_r, *std::next(it_r));
+                rescale::bicubic(scale_target, scale_curr);
+                write_png_file(s, scale_target);
+                ++counter;
+            }
+            mem_h = new_h;
+            mem_w = new_w;
+        }
     }
-    //mipmap.get_interpolated_img(0);
-    setFileName(to_path, 0.1);
-    //std::cout << to_path << std::endl;
 }
-*/
 
 #include<vector>
 void speedtests(){
@@ -567,17 +597,17 @@ int main(){
      * https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
     */
     
-    //nearestNeighbor();
-    //nearestNeighbor_bitmap_rgba();
-    //nearestNeighbor_bitmap_rgb();
+    nearestNeighbor();
+    nearestNeighbor_bitmap_rgba();
+    nearestNeighbor_bitmap_rgb();
     
-    //bilinear();
-    //bilinear_bitmap_rgba();
-    //bilinear_bitmap_rgb();
+    bilinear();
+    bilinear_bitmap_rgba();
+    bilinear_bitmap_rgb();
     
-    //bicubic();
-    //bicubic_bitmap_rgba();
-    //bicubic_bitmap_rgb();
+    bicubic();
+    bicubic_bitmap_rgba();
+    bicubic_bitmap_rgb();
 
     difference_of_gaussians();
     difference_of_gaussians_rgba();
@@ -612,8 +642,7 @@ int main(){
     write_png_file("../../test-database/test.png", mipmap[0]);
     mipmap.savefig("...");
     */
-
     plot_mipmap();
-    //generate_goomer();
+    generate_goomer();
     return 0;
 }

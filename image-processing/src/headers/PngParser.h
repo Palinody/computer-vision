@@ -8,6 +8,7 @@
 #include <cstdarg>
 #include <cassert>
 #include <memory>
+#include <limits.h>     // CHAR_BIT
 // debug
 #include <iostream>
 // sudo apt-get install libpng-dev
@@ -177,7 +178,7 @@ void write_png_file(std::string_view file_name, const PixelMap<COL_T>& pixelmap)
     if(setjmp(png_jmpbuf(png_ptr))) abort();
     png_set_IHDR(png_ptr, info_ptr, 
                 pixelmap.getWidth(), pixelmap.getHeight(),
-                (8*sizeof(COL_T)), png_utils.col_type[pixelmap.getChannels()-1], 
+                (CHAR_BIT*sizeof(COL_T)), png_utils.col_type[pixelmap.getChannels()-1], 
                 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_write_info(png_ptr, info_ptr);
         

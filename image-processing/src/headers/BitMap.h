@@ -66,9 +66,9 @@ public:
     inline const T& operator()(size_t i, size_t j, size_t c) const;
     
     inline T* begin();
-	inline T* end();
+    inline T* end();
     inline const T* begin() const;
-	inline const T* end() const;
+    inline const T* end() const;
 
     inline T* rowBegin(size_t row);
     inline T* rowEnd(size_t row);

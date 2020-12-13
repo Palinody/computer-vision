@@ -92,9 +92,6 @@ void nearestNeighbor(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
     for(size_t i = 0; i < new_h; ++i) h_orig_table[i] = ((i * h_ratio) >> 32);
     for(size_t j = 0; j < new_w; ++j) w_orig_table[j] = ((j * w_ratio) >> 32);
 
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
     for(size_t i = 0; i < new_h; ++i){
         for(size_t j = 0; j < new_w; ++j){
             size_t orig_i = h_orig_table[i];
@@ -125,9 +122,6 @@ void nearestNeighbor(BitMapRGBA& dest, const BitMapRGBA& src){
     for(size_t i = 0; i < new_h; ++i) h_orig_table[i] = ((i * h_ratio) >> 32);
     for(size_t j = 0; j < new_w; ++j) w_orig_table[j] = ((j * w_ratio) >> 32);
 
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
     for(size_t i = 0; i < new_h; ++i){
         for(size_t j = 0; j < new_w; ++j){
             size_t orig_i = h_orig_table[i];
@@ -154,9 +148,6 @@ void nearestNeighbor(BitMapRGB& dest, const BitMapRGB& src){
     for(size_t i = 0; i < new_h; ++i) h_orig_table[i] = ((i * h_ratio) >> 32);
     for(size_t j = 0; j < new_w; ++j) w_orig_table[j] = ((j * w_ratio) >> 32);
 
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
     for(size_t i = 0; i < new_h; ++i){
         for(size_t j = 0; j < new_w; ++j){
             size_t orig_i = h_orig_table[i];
@@ -191,26 +182,24 @@ void bilinear(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
         dw_orig_table[j] = w_ratio * j - w_orig_table[j];
     }
 
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
+    // kernel mask for original height
+    const ker_mask<true> km_h(2, 0, orig_height);
+    // kernel mask for original width
+    const ker_mask<true> km_w(2, 0, orig_width);
     for(size_t i = 0; i < new_h; ++i){
 
+        size_t orig_i = h_orig_table[i];
+        float dh = dh_orig_table[i];
         for(size_t j = 0; j < new_w; ++j){
             
-            size_t orig_i = h_orig_table[i];
-            float dh = dh_orig_table[i];
             size_t orig_j = w_orig_table[j];
             float dw = dw_orig_table[j];
-            #ifdef _OPENMP
-                #pragma omp simd
-            #endif
             for(size_t c = 0; c < channels; ++c){
 
                 png_byte p00 = src(orig_i  , orig_j  , c);
-                png_byte p01 = src(orig_i  , orig_j+1, c);
-                png_byte p10 = src(orig_i+1, orig_j  , c);
-                png_byte p11 = src(orig_i+1, orig_j+1, c);
+                png_byte p01 = src(orig_i  , orig_j+km_w(orig_j, 1), c);
+                png_byte p10 = src(orig_i+km_h(orig_i, 1), orig_j  , c);
+                png_byte p11 = src(orig_i+km_h(orig_i, 1), orig_j+km_w(orig_j, 1), c);
 
                 float pixel_v = p00 * (1 - dw) * (1 - dh) + 
                                 p01 *      dw  * (1 - dh) +
@@ -246,22 +235,23 @@ void bilinear(BitMapRGBA& dest, const BitMapRGBA& src){
         dw_orig_table[j] = w_ratio * j - w_orig_table[j];
     }
 
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
+    // kernel mask for original height
+    const ker_mask<true> km_h(2, 0, orig_height);
+    // kernel mask for original width
+    const ker_mask<true> km_w(2, 0, orig_width);
     for(size_t i = 0; i < new_h; ++i){
 
+        size_t orig_i = h_orig_table[i];
+        float dh = dh_orig_table[i];
         for(size_t j = 0; j < new_w; ++j){
             
-            size_t orig_i = h_orig_table[i];
-            float dh = dh_orig_table[i];
             size_t orig_j = w_orig_table[j];
             float dw = dw_orig_table[j];
 
             uint32_t p00 = src(orig_i  , orig_j  );
-            uint32_t p01 = src(orig_i  , orig_j+1);
-            uint32_t p10 = src(orig_i+1, orig_j  );
-            uint32_t p11 = src(orig_i+1, orig_j+1);
+            uint32_t p01 = src(orig_i  , orig_j+km_w(orig_j, 1));
+            uint32_t p10 = src(orig_i+km_h(orig_i, 1), orig_j  );
+            uint32_t p11 = src(orig_i+km_h(orig_i, 1), orig_j+km_w(orig_j, 1));
 
             uint32_t r = ( p00         & 0xff) * (1 - dw) * (1 - dh) + 
                          ( p01         & 0xff) *      dw  * (1 - dh) +
@@ -314,22 +304,23 @@ void bilinear(BitMapRGB& dest, const BitMapRGB& src){
         dw_orig_table[j] = w_ratio * j - w_orig_table[j];
     }
 
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
+    // kernel mask for original height
+    const ker_mask<true> km_h(2, 0, orig_height);
+    // kernel mask for original width
+    const ker_mask<true> km_w(2, 0, orig_width);
     for(size_t i = 0; i < new_h; ++i){
 
+        size_t orig_i = h_orig_table[i];
+        float dh = dh_orig_table[i];
         for(size_t j = 0; j < new_w; ++j){
             
-            size_t orig_i = h_orig_table[i];
-            float dh = dh_orig_table[i];
             size_t orig_j = w_orig_table[j];
             float dw = dw_orig_table[j];
 
             uint32_t p00 = src(orig_i  , orig_j  );
-            uint32_t p01 = src(orig_i  , orig_j+1);
-            uint32_t p10 = src(orig_i+1, orig_j  );
-            uint32_t p11 = src(orig_i+1, orig_j+1);
+            uint32_t p01 = src(orig_i  , orig_j+km_w(orig_j, 1));
+            uint32_t p10 = src(orig_i+km_h(orig_i, 1), orig_j  );
+            uint32_t p11 = src(orig_i+km_h(orig_i, 1), orig_j+km_w(orig_j, 1));
 
             uint32_t r = ( p00         & 0xff) * (1 - dw) * (1 - dh) + 
                          ( p01         & 0xff) *      dw  * (1 - dh) +
@@ -378,30 +369,37 @@ void trilinear(PixelMap<png_byte>& dest,
     // distance btw larger raference and interpolated image
     float dist = (WIDTH - new_w) / static_cast<float>(WIDTH - width);
 
+    // kernel mask for original height (large img)
+    const ker_mask<true> km_H(2, 0, HEIGHT);
+    // kernel mask for original width (large img)
+    const ker_mask<true> km_W(2, 0, WIDTH);
+    // kernel mask for original height (small img)
+    const ker_mask<true> km_h(2, 0, height);
+    // kernel mask for original width (small img)
+    const ker_mask<true> km_w(2, 0, width);
     for(size_t i = 0; i < new_h; ++i){
+        // original coordinates of larger image
+        size_t I_orig = H_ratio * i;
+        float dH = H_ratio * i - I_orig;
+        size_t i_orig = h_ratio * i;
+        float dh = h_ratio * i - i_orig;
         for(size_t j = 0; j < new_w; ++j){
-            // original coordinates of larger image
-            size_t I_orig = H_ratio * i;
-            float dH = H_ratio * i - I_orig;
+            // original coordinates of smaller image
             size_t J_orig = W_ratio * j;
             float dW = W_ratio * j - J_orig;
-            // original coordinates of smaller image
-            size_t i_orig = h_ratio * i;
-            float dh = h_ratio * i - i_orig;
             size_t j_orig = w_ratio * j;
             float dw = w_ratio * j - j_orig;
-
             for(size_t c = 0; c < channels; ++c){
                 // ref pixels from larger image
                 png_byte P00 = ref_IMG(I_orig  , J_orig  , c);
-                png_byte P01 = ref_IMG(I_orig  , J_orig+1, c);
-                png_byte P10 = ref_IMG(I_orig+1, J_orig  , c);
-                png_byte P11 = ref_IMG(I_orig+1, J_orig+1, c);
+                png_byte P01 = ref_IMG(I_orig  , J_orig+km_W(J_orig, 1), c);
+                png_byte P10 = ref_IMG(I_orig+km_H(I_orig, 1), J_orig  , c);
+                png_byte P11 = ref_IMG(I_orig+km_H(I_orig, 1), J_orig+km_W(J_orig, 1), c);
                 // ref pixels from smaller image
                 png_byte p00 = ref_img(i_orig  , j_orig  , c);
-                png_byte p01 = ref_img(i_orig  , j_orig+1, c);
-                png_byte p10 = ref_img(i_orig+1, j_orig  , c);
-                png_byte p11 = ref_img(i_orig+1, j_orig+1, c);
+                png_byte p01 = ref_img(i_orig  , j_orig+km_w(j_orig, 1), c);
+                png_byte p10 = ref_img(i_orig+km_h(i_orig, 1), j_orig  , c);
+                png_byte p11 = ref_img(i_orig+km_h(i_orig, 1), j_orig+km_w(j_orig, 1), c);
 
                 float pixel_v = P00 * (1 - dW) * (1 - dH) * (1 - dist) + 
                                 P01 *      dW  * (1 - dH) * (1 - dist) +
@@ -440,29 +438,39 @@ void trilinear(BitMapRGBA& dest, const BitMapRGBA& ref_img, const BitMapRGBA& re
     // distance btw larger raference and interpolated image
     float dist = (WIDTH - new_w) / static_cast<float>(WIDTH - width);
 
+    // kernel mask for original height (large img)
+    const ker_mask<true> km_H(2, 0, HEIGHT);
+    // kernel mask for original width (large img)
+    const ker_mask<true> km_W(2, 0, WIDTH);
+    // kernel mask for original height (small img)
+    const ker_mask<true> km_h(2, 0, height);
+    // kernel mask for original width (small img)
+    const ker_mask<true> km_w(2, 0, width);
     for(size_t i = 0; i < new_h; ++i){
+        // larger img i
+        size_t I_orig = H_ratio * i;
+        float dH = H_ratio * i - I_orig;
+        // smaller img i
+        size_t i_orig = h_ratio * i;
+        float dh = h_ratio * i - i_orig;
         for(size_t j = 0; j < new_w; ++j){
-            // original coordinates of larger image
-            size_t I_orig = H_ratio * i;
-            float dH = H_ratio * i - I_orig;
+            // larger image j   
             size_t J_orig = W_ratio * j;
             float dW = W_ratio * j - J_orig;
-            // original coordinates of smaller image
-            size_t i_orig = h_ratio * i;
-            float dh = h_ratio * i - i_orig;
+            // smaller image j
             size_t j_orig = w_ratio * j;
             float dw = w_ratio * j - j_orig;
 
             // ref pixels from larger image
             uint32_t P00 = ref_IMG(I_orig  , J_orig);
-            uint32_t P01 = ref_IMG(I_orig  , J_orig+1);
-            uint32_t P10 = ref_IMG(I_orig+1, J_orig);
-            uint32_t P11 = ref_IMG(I_orig+1, J_orig+1);
+            uint32_t P01 = ref_IMG(I_orig  , J_orig+km_W(J_orig, 1));
+            uint32_t P10 = ref_IMG(I_orig+km_H(I_orig, 1), J_orig);
+            uint32_t P11 = ref_IMG(I_orig+km_H(I_orig, 1), J_orig+km_W(J_orig, 1));
             // ref pixels from smaller image
             uint32_t p00 = ref_img(i_orig  , j_orig);
-            uint32_t p01 = ref_img(i_orig  , j_orig+1);
-            uint32_t p10 = ref_img(i_orig+1, j_orig);
-            uint32_t p11 = ref_img(i_orig+1, j_orig+1);
+            uint32_t p01 = ref_img(i_orig  , j_orig+km_w(j_orig, 1));
+            uint32_t p10 = ref_img(i_orig+km_h(i_orig, 1), j_orig);
+            uint32_t p11 = ref_img(i_orig+km_h(i_orig, 1), j_orig+km_w(j_orig, 1));
 
             uint32_t r = ( P00         & 0xff) * (1 - dW) * (1 - dH) * (1 - dist) + 
                          ( P01         & 0xff) *      dW  * (1 - dH) * (1 - dist) + 
@@ -535,29 +543,41 @@ void trilinear(BitMapRGB& dest, const BitMapRGB& ref_img, const BitMapRGB& ref_I
     // distance btw larger raference and interpolated image
     float dist = (WIDTH - new_w) / static_cast<float>(WIDTH - width);
 
+    // kernel mask for original height (large img)
+    const ker_mask<true> km_H(2, 0, HEIGHT);
+    // kernel mask for original width (large img)
+    const ker_mask<true> km_W(2, 0, WIDTH);
+    // kernel mask for original height (small img)
+    const ker_mask<true> km_h(2, 0, height);
+    // kernel mask for original width (small img)
+    const ker_mask<true> km_w(2, 0, width);
+
     for(size_t i = 0; i < new_h; ++i){
+        // larger img i
+        size_t I_orig = H_ratio * i;
+        float dH = H_ratio * i - I_orig;
+        // smaller img i
+        size_t i_orig = h_ratio * i;
+        float dh = h_ratio * i - i_orig;
+        
         for(size_t j = 0; j < new_w; ++j){
-            // original coordinates of larger image
-            size_t I_orig = H_ratio * i;
-            float dH = H_ratio * i - I_orig;
+            // larger image j   
             size_t J_orig = W_ratio * j;
             float dW = W_ratio * j - J_orig;
-            // original coordinates of smaller image
-            size_t i_orig = h_ratio * i;
-            float dh = h_ratio * i - i_orig;
+            // smaller image j
             size_t j_orig = w_ratio * j;
             float dw = w_ratio * j - j_orig;
 
             // ref pixels from larger image
             uint32_t P00 = ref_IMG(I_orig  , J_orig);
-            uint32_t P01 = ref_IMG(I_orig  , J_orig+1);
-            uint32_t P10 = ref_IMG(I_orig+1, J_orig);
-            uint32_t P11 = ref_IMG(I_orig+1, J_orig+1);
+            uint32_t P01 = ref_IMG(I_orig  , J_orig+km_W(J_orig, 1));
+            uint32_t P10 = ref_IMG(I_orig+km_H(I_orig, 1), J_orig);
+            uint32_t P11 = ref_IMG(I_orig+km_H(I_orig, 1), J_orig+km_W(J_orig, 1));
             // ref pixels from smaller image
             uint32_t p00 = ref_img(i_orig  , j_orig);
-            uint32_t p01 = ref_img(i_orig  , j_orig+1);
-            uint32_t p10 = ref_img(i_orig+1, j_orig);
-            uint32_t p11 = ref_img(i_orig+1, j_orig+1);
+            uint32_t p01 = ref_img(i_orig  , j_orig+km_w(j_orig, 1));
+            uint32_t p10 = ref_img(i_orig+km_h(i_orig, 1), j_orig);
+            uint32_t p11 = ref_img(i_orig+km_h(i_orig, 1), j_orig+km_w(j_orig, 1));
 
             uint32_t r = ( P00         & 0xff) * (1 - dW) * (1 - dH) * (1 - dist) + 
                          ( P01         & 0xff) *      dW  * (1 - dH) * (1 - dist) + 
@@ -614,51 +634,50 @@ void bicubic(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
     std::vector<size_t> w_orig_table(new_w);
     std::vector<float> dh_orig_table(new_h);
     std::vector<float> dw_orig_table(new_w);
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
     for(size_t i = 0; i < new_h; ++i){
         h_orig_table[i] = i * h_ratio;
         dh_orig_table[i] = h_ratio * i - h_orig_table[i];
     }
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
     for(size_t j = 0; j < new_w; ++j){
         w_orig_table[j] = j * w_ratio;
         dw_orig_table[j] = w_ratio * j - w_orig_table[j];
     }
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
+    // kernel mask for original height
+    const ker_mask<true> km_h(4, 1, orig_height);
+    // kernel mask for original width
+    const ker_mask<true> km_w(4, 1, orig_width);
     for(size_t i = 0; i < new_h; ++i){
-
+        
+        size_t orig_i = h_orig_table[i];
+        float dh = dh_orig_table[i];
+        //size_t orig_i = i * h_ratio;
+        //float dh = h_ratio * i - orig_i;
         for(size_t j = 0; j < new_w; ++j){
-            
-            size_t orig_i = h_orig_table[i];
-            float dh = dh_orig_table[i];
+
             size_t orig_j = w_orig_table[j];
             float dw = dw_orig_table[j];
-                
-            const png_byte* p00 = src.pixBegin(orig_i-1, orig_j-1);
-            const png_byte* p01 = src.pixBegin(orig_i-1, orig_j  );
-            const png_byte* p02 = src.pixBegin(orig_i-1, orig_j+1);
-            const png_byte* p03 = src.pixBegin(orig_i-1, orig_j+2);
+            //size_t orig_j = j * w_ratio;
+            //float dw = w_ratio * j - orig_j;
 
-            const png_byte* p10 = src.pixBegin(orig_i  , orig_j-1);
+            const png_byte* p00 = src.pixBegin(orig_i-km_h(orig_i, 0), orig_j-km_w(orig_i, 0));
+            const png_byte* p01 = src.pixBegin(orig_i-km_h(orig_i, 0), orig_j  );
+            const png_byte* p02 = src.pixBegin(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_i, 2));
+            const png_byte* p03 = src.pixBegin(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_i, 3));
+
+            const png_byte* p10 = src.pixBegin(orig_i  , orig_j-km_w(orig_i, 0));
             const png_byte* p11 = src.pixBegin(orig_i  , orig_j  );
-            const png_byte* p12 = src.pixBegin(orig_i  , orig_j+1);
-            const png_byte* p13 = src.pixBegin(orig_i  , orig_j+2);
+            const png_byte* p12 = src.pixBegin(orig_i  , orig_j+km_w(orig_i, 2));
+            const png_byte* p13 = src.pixBegin(orig_i  , orig_j+km_w(orig_i, 3));
                 
-            const png_byte* p20 = src.pixBegin(orig_i+1, orig_j-1);
-            const png_byte* p21 = src.pixBegin(orig_i+1, orig_j  );
-            const png_byte* p22 = src.pixBegin(orig_i+1, orig_j+1);
-            const png_byte* p23 = src.pixBegin(orig_i+1, orig_j+2);
+            const png_byte* p20 = src.pixBegin(orig_i+km_h(orig_i, 2), orig_j-km_w(orig_i, 0));
+            const png_byte* p21 = src.pixBegin(orig_i+km_h(orig_i, 2), orig_j  );
+            const png_byte* p22 = src.pixBegin(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_i, 2));
+            const png_byte* p23 = src.pixBegin(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_i, 3));
                 
-            const png_byte* p30 = src.pixBegin(orig_i+2, orig_j-1);
-            const png_byte* p31 = src.pixBegin(orig_i+2, orig_j  );
-            const png_byte* p32 = src.pixBegin(orig_i+2, orig_j+1);
-            const png_byte* p33 = src.pixBegin(orig_i+2, orig_j+2);
+            const png_byte* p30 = src.pixBegin(orig_i+km_h(orig_i, 3), orig_j-km_w(orig_i, 0));
+            const png_byte* p31 = src.pixBegin(orig_i+km_h(orig_i, 3), orig_j  );
+            const png_byte* p32 = src.pixBegin(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_i, 2));
+            const png_byte* p33 = src.pixBegin(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_i, 3));
 
             png_byte* pixel_dest = dest.pixBegin(i, j);
 
@@ -695,56 +714,50 @@ void bicubic_loop(BitMapRGBA& dest, const BitMapRGBA& src){
     std::vector<size_t> w_orig_table(new_w);
     std::vector<float> dh_orig_table(new_h);
     std::vector<float> dw_orig_table(new_w);
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
+
     for(size_t i = 0; i < new_h; ++i){
         h_orig_table[i] = i * h_ratio;
         dh_orig_table[i] = h_ratio * i - h_orig_table[i];
     }
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
     for(size_t j = 0; j < new_w; ++j){
         w_orig_table[j] = j * w_ratio;
         dw_orig_table[j] = w_ratio * j - w_orig_table[j];
     }
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
+
+    // kernel mask for original height
+    const ker_mask<true> km_h(4, 1, orig_height);
+    // kernel mask for original width
+    const ker_mask<true> km_w(4, 1, orig_width);
     for(size_t i = 0; i < new_h; ++i){
 
+        size_t orig_i = h_orig_table[i];
+        float dh = dh_orig_table[i];
         for(size_t j = 0; j < new_w; ++j){
-            
-            size_t orig_i = h_orig_table[i];
-            float dh = dh_orig_table[i];
+
             size_t orig_j = w_orig_table[j];
             float dw = dw_orig_table[j];
                 
-            const uint32_t p00 = src(orig_i-1, orig_j-1);
-            const uint32_t p01 = src(orig_i-1, orig_j  );
-            const uint32_t p02 = src(orig_i-1, orig_j+1);
-            const uint32_t p03 = src(orig_i-1, orig_j+2);
+            const uint32_t p00 = src(orig_i-km_h(orig_i, 0), orig_j-km_w(orig_i, 0));
+            const uint32_t p01 = src(orig_i-km_h(orig_i, 0), orig_j  );
+            const uint32_t p02 = src(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_i, 2));
+            const uint32_t p03 = src(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_i, 3));
 
-            const uint32_t p10 = src(orig_i  , orig_j-1);
+            const uint32_t p10 = src(orig_i  , orig_j-km_w(orig_i, 0));
             const uint32_t p11 = src(orig_i  , orig_j  );
-            const uint32_t p12 = src(orig_i  , orig_j+1);
-            const uint32_t p13 = src(orig_i  , orig_j+2);
+            const uint32_t p12 = src(orig_i  , orig_j+km_w(orig_i, 2));
+            const uint32_t p13 = src(orig_i  , orig_j+km_w(orig_i, 3));
                 
-            const uint32_t p20 = src(orig_i+1, orig_j-1);
-            const uint32_t p21 = src(orig_i+1, orig_j  );
-            const uint32_t p22 = src(orig_i+1, orig_j+1);
-            const uint32_t p23 = src(orig_i+1, orig_j+2);
+            const uint32_t p20 = src(orig_i+km_h(orig_i, 2), orig_j-km_w(orig_i, 0));
+            const uint32_t p21 = src(orig_i+km_h(orig_i, 2), orig_j  );
+            const uint32_t p22 = src(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_i, 2));
+            const uint32_t p23 = src(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_i, 3));
                 
-            const uint32_t p30 = src(orig_i+2, orig_j-1);
-            const uint32_t p31 = src(orig_i+2, orig_j  );
-            const uint32_t p32 = src(orig_i+2, orig_j+1);
-            const uint32_t p33 = src(orig_i+2, orig_j+2);
+            const uint32_t p30 = src(orig_i+km_h(orig_i, 3), orig_j-km_w(orig_i, 0));
+            const uint32_t p31 = src(orig_i+km_h(orig_i, 3), orig_j  );
+            const uint32_t p32 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_i, 2));
+            const uint32_t p33 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_i, 3));
 
             dest(i, j) = 0; // making sure pixel is zero to start accumulating
-            #ifdef _OPENMP
-                #pragma omp simd
-            #endif
             for(size_t c = 0; c < 4; ++c){
                 float p0 = cubicHermite((p00 >> 8*c & 0xff), (p01 >> 8*c & 0xff), (p02 >> 8*c & 0xff), (p03 >> 8*c & 0xff), dw);
                 float p1 = cubicHermite((p10 >> 8*c & 0xff), (p11 >> 8*c & 0xff), (p12 >> 8*c & 0xff), (p13 >> 8*c & 0xff), dw);
@@ -773,51 +786,47 @@ void bicubic(BitMapRGBA& dest, const BitMapRGBA& src){
     std::vector<size_t> w_orig_table(new_w);
     std::vector<float> dh_orig_table(new_h);
     std::vector<float> dw_orig_table(new_w);
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
+
     for(size_t i = 0; i < new_h; ++i){
         h_orig_table[i] = i * h_ratio;
         dh_orig_table[i] = h_ratio * i - h_orig_table[i];
     }
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
     for(size_t j = 0; j < new_w; ++j){
         w_orig_table[j] = j * w_ratio;
         dw_orig_table[j] = w_ratio * j - w_orig_table[j];
     }
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
+    // kernel mask for original height
+    const ker_mask<true> km_h(4, 1, orig_height);
+    // kernel mask for original width
+    const ker_mask<true> km_w(4, 1, orig_width);
     for(size_t i = 0; i < new_h; ++i){
 
+        size_t orig_i = h_orig_table[i];
+        float dh = dh_orig_table[i];
         for(size_t j = 0; j < new_w; ++j){
             
-            size_t orig_i = h_orig_table[i];
-            float dh = dh_orig_table[i];
             size_t orig_j = w_orig_table[j];
             float dw = dw_orig_table[j];
                 
-            const uint32_t p00 = src(orig_i-1, orig_j-1);
-            const uint32_t p01 = src(orig_i-1, orig_j  );
-            const uint32_t p02 = src(orig_i-1, orig_j+1);
-            const uint32_t p03 = src(orig_i-1, orig_j+2);
+            const uint32_t p00 = src(orig_i-km_h(orig_i, 0), orig_j-km_w(orig_j, 0));
+            const uint32_t p01 = src(orig_i-km_h(orig_i, 0), orig_j  );
+            const uint32_t p02 = src(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_j, 2));
+            const uint32_t p03 = src(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_j, 3));
 
-            const uint32_t p10 = src(orig_i  , orig_j-1);
+            const uint32_t p10 = src(orig_i  , orig_j-km_w(orig_j, 0));
             const uint32_t p11 = src(orig_i  , orig_j  );
-            const uint32_t p12 = src(orig_i  , orig_j+1);
-            const uint32_t p13 = src(orig_i  , orig_j+2);
+            const uint32_t p12 = src(orig_i  , orig_j+km_w(orig_j, 2));
+            const uint32_t p13 = src(orig_i  , orig_j+km_w(orig_j, 3));
                 
-            const uint32_t p20 = src(orig_i+1, orig_j-1);
-            const uint32_t p21 = src(orig_i+1, orig_j  );
-            const uint32_t p22 = src(orig_i+1, orig_j+1);
-            const uint32_t p23 = src(orig_i+1, orig_j+2);
+            const uint32_t p20 = src(orig_i+km_h(orig_i, 2), orig_j-km_w(orig_j, 0));
+            const uint32_t p21 = src(orig_i+km_h(orig_i, 2), orig_j  );
+            const uint32_t p22 = src(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_j, 2));
+            const uint32_t p23 = src(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_j, 3));
                 
-            const uint32_t p30 = src(orig_i+2, orig_j-1);
-            const uint32_t p31 = src(orig_i+2, orig_j  );
-            const uint32_t p32 = src(orig_i+2, orig_j+1);
-            const uint32_t p33 = src(orig_i+2, orig_j+2);
+            const uint32_t p30 = src(orig_i+km_h(orig_i, 3), orig_j-km_w(orig_j, 0));
+            const uint32_t p31 = src(orig_i+km_h(orig_i, 3), orig_j  );
+            const uint32_t p32 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 2));
+            const uint32_t p33 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 3));
             
             float r0 = cubicHermite((p00 >> 0 & 0xff), (p01 >> 0 & 0xff), (p02 >> 0 & 0xff), (p03 >> 0 & 0xff), dw);
             float r1 = cubicHermite((p10 >> 0 & 0xff), (p11 >> 0 & 0xff), (p12 >> 0 & 0xff), (p13 >> 0 & 0xff), dw);
@@ -870,51 +879,48 @@ void bicubic(BitMapRGB& dest, const BitMapRGB& src){
     std::vector<size_t> w_orig_table(new_w);
     std::vector<float> dh_orig_table(new_h);
     std::vector<float> dw_orig_table(new_w);
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
+    
     for(size_t i = 0; i < new_h; ++i){
         h_orig_table[i] = i * h_ratio;
         dh_orig_table[i] = h_ratio * i - h_orig_table[i];
     }
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
     for(size_t j = 0; j < new_w; ++j){
         w_orig_table[j] = j * w_ratio;
         dw_orig_table[j] = w_ratio * j - w_orig_table[j];
     }
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
+
+    // kernel mask for original height
+    const ker_mask<true> km_h(4, 1, orig_height);
+    // kernel mask for original width
+    const ker_mask<true> km_w(4, 1, orig_width);
     for(size_t i = 0; i < new_h; ++i){
 
+        size_t orig_i = h_orig_table[i];
+        float dh = dh_orig_table[i];
         for(size_t j = 0; j < new_w; ++j){
             
-            size_t orig_i = h_orig_table[i];
-            float dh = dh_orig_table[i];
             size_t orig_j = w_orig_table[j];
             float dw = dw_orig_table[j];
                 
-            const uint32_t p00 = src(orig_i-1, orig_j-1);
-            const uint32_t p01 = src(orig_i-1, orig_j  );
-            const uint32_t p02 = src(orig_i-1, orig_j+1);
-            const uint32_t p03 = src(orig_i-1, orig_j+2);
+            const uint32_t p00 = src(orig_i-km_h(orig_i, 0), orig_j-km_w(orig_j, 0));
+            const uint32_t p01 = src(orig_i-km_h(orig_i, 0), orig_j  );
+            const uint32_t p02 = src(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_j, 2));
+            const uint32_t p03 = src(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_j, 3));
 
-            const uint32_t p10 = src(orig_i  , orig_j-1);
+            const uint32_t p10 = src(orig_i  , orig_j-km_w(orig_j, 0));
             const uint32_t p11 = src(orig_i  , orig_j  );
-            const uint32_t p12 = src(orig_i  , orig_j+1);
-            const uint32_t p13 = src(orig_i  , orig_j+2);
+            const uint32_t p12 = src(orig_i  , orig_j+km_w(orig_j, 2));
+            const uint32_t p13 = src(orig_i  , orig_j+km_w(orig_j, 3));
                 
-            const uint32_t p20 = src(orig_i+1, orig_j-1);
-            const uint32_t p21 = src(orig_i+1, orig_j  );
-            const uint32_t p22 = src(orig_i+1, orig_j+1);
-            const uint32_t p23 = src(orig_i+1, orig_j+2);
+            const uint32_t p20 = src(orig_i+km_h(orig_i, 2), orig_j-km_w(orig_j, 0));
+            const uint32_t p21 = src(orig_i+km_h(orig_i, 2), orig_j  );
+            const uint32_t p22 = src(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_j, 2));
+            const uint32_t p23 = src(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_j, 3));
                 
-            const uint32_t p30 = src(orig_i+2, orig_j-1);
-            const uint32_t p31 = src(orig_i+2, orig_j  );
-            const uint32_t p32 = src(orig_i+2, orig_j+1);
-            const uint32_t p33 = src(orig_i+2, orig_j+2);
+            const uint32_t p30 = src(orig_i+km_h(orig_i, 3), orig_j-km_w(orig_j, 0));
+            const uint32_t p31 = src(orig_i+km_h(orig_i, 3), orig_j  );
+            const uint32_t p32 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 2));
+            const uint32_t p33 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 3));
             
             float r0 = cubicHermite((p00 >> 0 & 0xff), (p01 >> 0 & 0xff), (p02 >> 0 & 0xff), (p03 >> 0 & 0xff), dw);
             float r1 = cubicHermite((p10 >> 0 & 0xff), (p11 >> 0 & 0xff), (p12 >> 0 & 0xff), (p13 >> 0 & 0xff), dw);
@@ -993,43 +999,44 @@ void bicubic_cache(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
     }
     
     float pixel_v_c;
-    #ifdef _OPENMP
-        #pragma omp parallel for simd collapse(3)
-    #endif
+
+    // kernel mask for original height
+    const ker_mask<true> km_h(4, 1, orig_height);
+    // kernel mask for original width
+    const ker_mask<true> km_w(4, 1, orig_width);
     for(size_t i = 0; i < new_h; ++i){
         
+        size_t orig_i = h_orig_table[i];
+        float dh = dh_orig_table[i];
+        float dh2 = dh2_orig_table[i];
+        float dh3 = dh3_orig_table[i];
         for(size_t j = 0; j < new_w; ++j){
 
+            size_t orig_j = w_orig_table[j];
+            float dw = dw_orig_table[j];
+            float dw2 = dw2_orig_table[j];
+            float dw3 = dw3_orig_table[j];
             for(size_t c = 0; c < channels; ++c){
-                size_t orig_i = h_orig_table[i];
-                float dh = dh_orig_table[i];
-                float dh2 = dh2_orig_table[i];
-                float dh3 = dh3_orig_table[i];
 
-                size_t orig_j = w_orig_table[j];
-                float dw = dw_orig_table[j];
-                float dw2 = dw2_orig_table[j];
-                float dw3 = dw3_orig_table[j];
+                p00 = src(orig_i-km_h(orig_i, 0), orig_j-km_w(orig_j, 0), c);
+                p01 = src(orig_i-km_h(orig_i, 0), orig_j  , c);
+                p02 = src(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_j, 2), c);
+                p03 = src(orig_i-km_h(orig_i, 0), orig_j+km_w(orig_j, 3), c);
 
-                p00 = src(orig_i-1, orig_j-1, c);
-                p01 = src(orig_i-1, orig_j  , c);
-                p02 = src(orig_i-1, orig_j+1, c);
-                p03 = src(orig_i-1, orig_j+2, c);
-
-                p10 = src(orig_i  , orig_j-1, c);
+                p10 = src(orig_i  , orig_j-km_w(orig_j, 0), c);
                 p11 = src(orig_i  , orig_j  , c);
-                p12 = src(orig_i  , orig_j+1, c);
-                p13 = src(orig_i  , orig_j+2, c);
+                p12 = src(orig_i  , orig_j+km_w(orig_j, 2), c);
+                p13 = src(orig_i  , orig_j+km_w(orig_j, 3), c);
                 
-                p20 = src(orig_i+1, orig_j-1, c);
-                p21 = src(orig_i+1, orig_j  , c);
-                p22 = src(orig_i+1, orig_j+1, c);
-                p23 = src(orig_i+1, orig_j+2, c);
+                p20 = src(orig_i+km_h(orig_i, 2), orig_j-km_w(orig_j, 0), c);
+                p21 = src(orig_i+km_h(orig_i, 2), orig_j  , c);
+                p22 = src(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_j, 2), c);
+                p23 = src(orig_i+km_h(orig_i, 2), orig_j+km_w(orig_j, 3), c);
                 
-                p30 = src(orig_i+2, orig_j-1, c);
-                p31 = src(orig_i+2, orig_j  , c);
-                p32 = src(orig_i+2, orig_j+1, c);
-                p33 = src(orig_i+2, orig_j+2, c);
+                p30 = src(orig_i+km_h(orig_i, 3), orig_j-km_w(orig_j, 0), c);
+                p31 = src(orig_i+km_h(orig_i, 3), orig_j  , c);
+                p32 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 2), c);
+                p33 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 3), c);
 
                 a00 = p11;
                 a01 = -.5*p10 + .5*p12;
@@ -1196,7 +1203,7 @@ rescale_by_two(BitMapRGB& smaller_ref, BitMapRGB& larger_ref,
     //printf("%ld, %ld, %ld\n", inf, w_des, sup);
     return std::make_pair(h_ratio, w_ratio);
 }
-};
+}
 /**
  * The kernels for blurring are separable
  * 1 kernel slides [horizont/vertic]aly
@@ -1541,7 +1548,8 @@ void fft(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel1D
 
     fft_h(dest, src, kernel);
     dest = dest.transpose();
-    fft_h(dest, dest, kernel);
+    PixelMap<png_byte> temp = dest;
+    fft_h(dest, temp, kernel);
     dest = dest.transpose();
 }
 
@@ -1550,7 +1558,8 @@ void fft(BitMapRGBA& dest, const BitMapRGBA& src, const Kernel1D<T>& kernel){
 
     fft_h(dest, src, kernel);
     dest = dest.transpose();
-    fft_h(dest, dest, kernel);
+    BitMapRGBA temp = dest;
+    fft_h(dest, temp, kernel);
     dest = dest.transpose();
 }
 
@@ -1559,7 +1568,8 @@ void fft(BitMapRGB& dest, const BitMapRGB& src, const Kernel1D<T>& kernel){
     
     fft_h(dest, src, kernel);
     dest = dest.transpose();
-    fft_h(dest, dest, kernel);
+    BitMapRGB temp = dest;
+    fft_h(dest, temp, kernel);
     dest = dest.transpose();
 }
 
