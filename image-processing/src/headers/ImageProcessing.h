@@ -617,7 +617,7 @@ void trilinear(BitMapRGB& dest, const BitMapRGB& ref_img, const BitMapRGB& ref_I
     }
 }
 
-inline float cubicHermite(float p0, float p1, float p2, float p3, float val){
+inline float cubicHermite(const float p0, const float p1, const float p2, const float p3, const float val){
     return p1 + 0.5f*val*(p2 - p0 + val*(2.0f*p0 - 5.0f*p1 + 4.0f*p2 - p3 + val*(3.0f*(p1 - p2) + p3 - p0)));
 }
 
@@ -686,10 +686,10 @@ void bicubic(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
                                                     ++p20, ++p21, ++p22, ++p23,
                                                     ++p30, ++p31, ++p32, ++p33,
                                                     ++pixel_dest){
-                float p0 = cubicHermite(*p00, *p01, *p02, *p03, dw);
-                float p1 = cubicHermite(*p10, *p11, *p12, *p13, dw);
-                float p2 = cubicHermite(*p20, *p21, *p22, *p23, dw);
-                float p3 = cubicHermite(*p30, *p31, *p32, *p33, dw);
+                const float p0 = cubicHermite(*p00, *p01, *p02, *p03, dw);
+                const float p1 = cubicHermite(*p10, *p11, *p12, *p13, dw);
+                const float p2 = cubicHermite(*p20, *p21, *p22, *p23, dw);
+                const float p3 = cubicHermite(*p30, *p31, *p32, *p33, dw);
                 
                 float pixel_v_c = cubicHermite(p0, p1, p2, p3, dh);
                     
@@ -759,10 +759,10 @@ void bicubic_loop(BitMapRGBA& dest, const BitMapRGBA& src){
 
             dest(i, j) = 0; // making sure pixel is zero to start accumulating
             for(size_t c = 0; c < 4; ++c){
-                float p0 = cubicHermite((p00 >> 8*c & 0xff), (p01 >> 8*c & 0xff), (p02 >> 8*c & 0xff), (p03 >> 8*c & 0xff), dw);
-                float p1 = cubicHermite((p10 >> 8*c & 0xff), (p11 >> 8*c & 0xff), (p12 >> 8*c & 0xff), (p13 >> 8*c & 0xff), dw);
-                float p2 = cubicHermite((p20 >> 8*c & 0xff), (p21 >> 8*c & 0xff), (p22 >> 8*c & 0xff), (p23 >> 8*c & 0xff), dw);
-                float p3 = cubicHermite((p30 >> 8*c & 0xff), (p31 >> 8*c & 0xff), (p32 >> 8*c & 0xff), (p33 >> 8*c & 0xff), dw);
+                const float p0 = cubicHermite((p00 >> 8*c & 0xff), (p01 >> 8*c & 0xff), (p02 >> 8*c & 0xff), (p03 >> 8*c & 0xff), dw);
+                const float p1 = cubicHermite((p10 >> 8*c & 0xff), (p11 >> 8*c & 0xff), (p12 >> 8*c & 0xff), (p13 >> 8*c & 0xff), dw);
+                const float p2 = cubicHermite((p20 >> 8*c & 0xff), (p21 >> 8*c & 0xff), (p22 >> 8*c & 0xff), (p23 >> 8*c & 0xff), dw);
+                const float p3 = cubicHermite((p30 >> 8*c & 0xff), (p31 >> 8*c & 0xff), (p32 >> 8*c & 0xff), (p33 >> 8*c & 0xff), dw);
 
                 float p = cubicHermite(p0, p1, p2, p3, dh);
                 CLAMP(p, 0.0f, 255.0f);
@@ -828,25 +828,25 @@ void bicubic(BitMapRGBA& dest, const BitMapRGBA& src){
             const uint32_t p32 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 2));
             const uint32_t p33 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 3));
             
-            float r0 = cubicHermite((p00 >> 0 & 0xff), (p01 >> 0 & 0xff), (p02 >> 0 & 0xff), (p03 >> 0 & 0xff), dw);
-            float r1 = cubicHermite((p10 >> 0 & 0xff), (p11 >> 0 & 0xff), (p12 >> 0 & 0xff), (p13 >> 0 & 0xff), dw);
-            float r2 = cubicHermite((p20 >> 0 & 0xff), (p21 >> 0 & 0xff), (p22 >> 0 & 0xff), (p23 >> 0 & 0xff), dw);
-            float r3 = cubicHermite((p30 >> 0 & 0xff), (p31 >> 0 & 0xff), (p32 >> 0 & 0xff), (p33 >> 0 & 0xff), dw);
+            const float r0 = cubicHermite((p00 >> 0 & 0xff), (p01 >> 0 & 0xff), (p02 >> 0 & 0xff), (p03 >> 0 & 0xff), dw);
+            const float r1 = cubicHermite((p10 >> 0 & 0xff), (p11 >> 0 & 0xff), (p12 >> 0 & 0xff), (p13 >> 0 & 0xff), dw);
+            const float r2 = cubicHermite((p20 >> 0 & 0xff), (p21 >> 0 & 0xff), (p22 >> 0 & 0xff), (p23 >> 0 & 0xff), dw);
+            const float r3 = cubicHermite((p30 >> 0 & 0xff), (p31 >> 0 & 0xff), (p32 >> 0 & 0xff), (p33 >> 0 & 0xff), dw);
 
-            float g0 = cubicHermite((p00 >> 8 & 0xff), (p01 >> 8 & 0xff), (p02 >> 8 & 0xff), (p03 >> 8 & 0xff), dw);
-            float g1 = cubicHermite((p10 >> 8 & 0xff), (p11 >> 8 & 0xff), (p12 >> 8 & 0xff), (p13 >> 8 & 0xff), dw);
-            float g2 = cubicHermite((p20 >> 8 & 0xff), (p21 >> 8 & 0xff), (p22 >> 8 & 0xff), (p23 >> 8 & 0xff), dw);
-            float g3 = cubicHermite((p30 >> 8 & 0xff), (p31 >> 8 & 0xff), (p32 >> 8 & 0xff), (p33 >> 8 & 0xff), dw);
+            const float g0 = cubicHermite((p00 >> 8 & 0xff), (p01 >> 8 & 0xff), (p02 >> 8 & 0xff), (p03 >> 8 & 0xff), dw);
+            const float g1 = cubicHermite((p10 >> 8 & 0xff), (p11 >> 8 & 0xff), (p12 >> 8 & 0xff), (p13 >> 8 & 0xff), dw);
+            const float g2 = cubicHermite((p20 >> 8 & 0xff), (p21 >> 8 & 0xff), (p22 >> 8 & 0xff), (p23 >> 8 & 0xff), dw);
+            const float g3 = cubicHermite((p30 >> 8 & 0xff), (p31 >> 8 & 0xff), (p32 >> 8 & 0xff), (p33 >> 8 & 0xff), dw);
 
-            float b0 = cubicHermite((p00 >> 16 & 0xff), (p01 >> 16 & 0xff), (p02 >> 16 & 0xff), (p03 >> 16 & 0xff), dw);
-            float b1 = cubicHermite((p10 >> 16 & 0xff), (p11 >> 16 & 0xff), (p12 >> 16 & 0xff), (p13 >> 16 & 0xff), dw);
-            float b2 = cubicHermite((p20 >> 16 & 0xff), (p21 >> 16 & 0xff), (p22 >> 16 & 0xff), (p23 >> 16 & 0xff), dw);
-            float b3 = cubicHermite((p30 >> 16 & 0xff), (p31 >> 16 & 0xff), (p32 >> 16 & 0xff), (p33 >> 16 & 0xff), dw);
+            const float b0 = cubicHermite((p00 >> 16 & 0xff), (p01 >> 16 & 0xff), (p02 >> 16 & 0xff), (p03 >> 16 & 0xff), dw);
+            const float b1 = cubicHermite((p10 >> 16 & 0xff), (p11 >> 16 & 0xff), (p12 >> 16 & 0xff), (p13 >> 16 & 0xff), dw);
+            const float b2 = cubicHermite((p20 >> 16 & 0xff), (p21 >> 16 & 0xff), (p22 >> 16 & 0xff), (p23 >> 16 & 0xff), dw);
+            const float b3 = cubicHermite((p30 >> 16 & 0xff), (p31 >> 16 & 0xff), (p32 >> 16 & 0xff), (p33 >> 16 & 0xff), dw);
 
-            float a0 = cubicHermite((p00 >> 24 & 0xff), (p01 >> 24 & 0xff), (p02 >> 24 & 0xff), (p03 >> 24 & 0xff), dw);
-            float a1 = cubicHermite((p10 >> 24 & 0xff), (p11 >> 24 & 0xff), (p12 >> 24 & 0xff), (p13 >> 24 & 0xff), dw);
-            float a2 = cubicHermite((p20 >> 24 & 0xff), (p21 >> 24 & 0xff), (p22 >> 24 & 0xff), (p23 >> 24 & 0xff), dw);
-            float a3 = cubicHermite((p30 >> 24 & 0xff), (p31 >> 24 & 0xff), (p32 >> 24 & 0xff), (p33 >> 24 & 0xff), dw);
+            const float a0 = cubicHermite((p00 >> 24 & 0xff), (p01 >> 24 & 0xff), (p02 >> 24 & 0xff), (p03 >> 24 & 0xff), dw);
+            const float a1 = cubicHermite((p10 >> 24 & 0xff), (p11 >> 24 & 0xff), (p12 >> 24 & 0xff), (p13 >> 24 & 0xff), dw);
+            const float a2 = cubicHermite((p20 >> 24 & 0xff), (p21 >> 24 & 0xff), (p22 >> 24 & 0xff), (p23 >> 24 & 0xff), dw);
+            const float a3 = cubicHermite((p30 >> 24 & 0xff), (p31 >> 24 & 0xff), (p32 >> 24 & 0xff), (p33 >> 24 & 0xff), dw);
 
             float r = cubicHermite(r0, r1, r2, r3, dh);
             float g = cubicHermite(g0, g1, g2, g3, dh);
@@ -922,20 +922,20 @@ void bicubic(BitMapRGB& dest, const BitMapRGB& src){
             const uint32_t p32 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 2));
             const uint32_t p33 = src(orig_i+km_h(orig_i, 3), orig_j+km_w(orig_j, 3));
             
-            float r0 = cubicHermite((p00 >> 0 & 0xff), (p01 >> 0 & 0xff), (p02 >> 0 & 0xff), (p03 >> 0 & 0xff), dw);
-            float r1 = cubicHermite((p10 >> 0 & 0xff), (p11 >> 0 & 0xff), (p12 >> 0 & 0xff), (p13 >> 0 & 0xff), dw);
-            float r2 = cubicHermite((p20 >> 0 & 0xff), (p21 >> 0 & 0xff), (p22 >> 0 & 0xff), (p23 >> 0 & 0xff), dw);
-            float r3 = cubicHermite((p30 >> 0 & 0xff), (p31 >> 0 & 0xff), (p32 >> 0 & 0xff), (p33 >> 0 & 0xff), dw);
+            const float r0 = cubicHermite((p00 >> 0 & 0xff), (p01 >> 0 & 0xff), (p02 >> 0 & 0xff), (p03 >> 0 & 0xff), dw);
+            const float r1 = cubicHermite((p10 >> 0 & 0xff), (p11 >> 0 & 0xff), (p12 >> 0 & 0xff), (p13 >> 0 & 0xff), dw);
+            const float r2 = cubicHermite((p20 >> 0 & 0xff), (p21 >> 0 & 0xff), (p22 >> 0 & 0xff), (p23 >> 0 & 0xff), dw);
+            const float r3 = cubicHermite((p30 >> 0 & 0xff), (p31 >> 0 & 0xff), (p32 >> 0 & 0xff), (p33 >> 0 & 0xff), dw);
 
-            float g0 = cubicHermite((p00 >> 8 & 0xff), (p01 >> 8 & 0xff), (p02 >> 8 & 0xff), (p03 >> 8 & 0xff), dw);
-            float g1 = cubicHermite((p10 >> 8 & 0xff), (p11 >> 8 & 0xff), (p12 >> 8 & 0xff), (p13 >> 8 & 0xff), dw);
-            float g2 = cubicHermite((p20 >> 8 & 0xff), (p21 >> 8 & 0xff), (p22 >> 8 & 0xff), (p23 >> 8 & 0xff), dw);
-            float g3 = cubicHermite((p30 >> 8 & 0xff), (p31 >> 8 & 0xff), (p32 >> 8 & 0xff), (p33 >> 8 & 0xff), dw);
+            const float g0 = cubicHermite((p00 >> 8 & 0xff), (p01 >> 8 & 0xff), (p02 >> 8 & 0xff), (p03 >> 8 & 0xff), dw);
+            const float g1 = cubicHermite((p10 >> 8 & 0xff), (p11 >> 8 & 0xff), (p12 >> 8 & 0xff), (p13 >> 8 & 0xff), dw);
+            const float g2 = cubicHermite((p20 >> 8 & 0xff), (p21 >> 8 & 0xff), (p22 >> 8 & 0xff), (p23 >> 8 & 0xff), dw);
+            const float g3 = cubicHermite((p30 >> 8 & 0xff), (p31 >> 8 & 0xff), (p32 >> 8 & 0xff), (p33 >> 8 & 0xff), dw);
 
-            float b0 = cubicHermite((p00 >> 16 & 0xff), (p01 >> 16 & 0xff), (p02 >> 16 & 0xff), (p03 >> 16 & 0xff), dw);
-            float b1 = cubicHermite((p10 >> 16 & 0xff), (p11 >> 16 & 0xff), (p12 >> 16 & 0xff), (p13 >> 16 & 0xff), dw);
-            float b2 = cubicHermite((p20 >> 16 & 0xff), (p21 >> 16 & 0xff), (p22 >> 16 & 0xff), (p23 >> 16 & 0xff), dw);
-            float b3 = cubicHermite((p30 >> 16 & 0xff), (p31 >> 16 & 0xff), (p32 >> 16 & 0xff), (p33 >> 16 & 0xff), dw);
+            const float b0 = cubicHermite((p00 >> 16 & 0xff), (p01 >> 16 & 0xff), (p02 >> 16 & 0xff), (p03 >> 16 & 0xff), dw);
+            const float b1 = cubicHermite((p10 >> 16 & 0xff), (p11 >> 16 & 0xff), (p12 >> 16 & 0xff), (p13 >> 16 & 0xff), dw);
+            const float b2 = cubicHermite((p20 >> 16 & 0xff), (p21 >> 16 & 0xff), (p22 >> 16 & 0xff), (p23 >> 16 & 0xff), dw);
+            const float b3 = cubicHermite((p30 >> 16 & 0xff), (p31 >> 16 & 0xff), (p32 >> 16 & 0xff), (p33 >> 16 & 0xff), dw);
 
             float r = cubicHermite(r0, r1, r2, r3, dh);
             float g = cubicHermite(g0, g1, g2, g3, dh);
@@ -1223,7 +1223,7 @@ rescale_by_two(BitMapRGB& smaller_ref, BitMapRGB& larger_ref,
  *      OUT[0       ->   k/2  ) = IN[0       ->   k/2  ) * K[  k/2 -> k    )
  *      OUT[  k/2   -> w-k/2+1) = IN[  k/2   -> w-k/2+1) * K[0     -> k    )
  *      OUT[w-k/2+1 -> w      ) = IN[w-k/2+1 -> w      ) * K[0     -> k/2+1)
-*/
+ */
 template<typename T>
 void fft_h(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel1D<T>& kernel){
     
@@ -1236,20 +1236,15 @@ void fft_h(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel
 
     std::vector<T> priv_buf(new_channels, 0);
 
-    #ifdef _OPENMP
-        #pragma omp parallel for
-    #endif
     // horizontal FT
     for(size_t i = 0; i < new_height; ++i){
         // part1
         for(size_t j = 0; j < k_l_2_a; ++j){
 
             std::fill(priv_buf.begin(), priv_buf.end(), 0);
-            //#pragma omp simd reduction(+:priv_buf)
-            for(size_t idx = k_l_2_a; idx < ker_len; ++idx){
+            for(size_t k = k_l_2_a; k < ker_len; ++k){
                 for(size_t c = 0; c < new_channels; ++c){
-                    //src(new_i+ker_i, new_j+ker_j, c)
-                    priv_buf[c] += src(i, j-k_l_2_a+idx, c) * kernel(idx, c);
+                    priv_buf[c] += src(i, j-k_l_2_a+k, c) * kernel(k, c);
                 }
             }
             for(size_t c = 0; c < new_channels; ++c){
@@ -1258,11 +1253,11 @@ void fft_h(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel
         }
         // part2
         for(size_t j = k_l_2_a; j < new_width-k_l_2_b; ++j){
+            
             std::fill(priv_buf.begin(), priv_buf.end(), 0);
-            //#pragma omp simd reduction(+:priv_buf)
-            for(size_t idx = 0; idx < ker_len; ++idx){
+            for(size_t k = 0; k < ker_len; ++k){
                 for(size_t c = 0; c < new_channels; ++c){
-                    priv_buf[c] += src(i, j-k_l_2_a+idx, c) * kernel(idx, c);
+                    priv_buf[c] += src(i, j-k_l_2_a+k, c) * kernel(k, c);
                 }
             }
             for(size_t c = 0; c < new_channels; ++c){
@@ -1271,11 +1266,11 @@ void fft_h(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel
         }
         // part3
         for(size_t j = new_width-k_l_2_b; j < new_width; ++j){
+            
             std::fill(priv_buf.begin(), priv_buf.end(), 0);
-            //#pragma omp simd reduction(+:priv_buf)
-            for(size_t idx = 0; idx < k_l_2_b; ++idx){
+            for(size_t k = 0; k < k_l_2_a + (new_width-j); ++k){
                 for(size_t c = 0; c < new_channels; ++c){
-                    priv_buf[c] += src(i, j-k_l_2_a+idx, c) * kernel(idx, c);
+                    priv_buf[c] += src(i, j-k_l_2_a+k, c) * kernel(k, c);
                 }
             }
             for(size_t c = 0; c < new_channels; ++c){
@@ -1284,17 +1279,17 @@ void fft_h(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel
         }
     }
 }
-    /**
-     * precomputes lookup table for kernel ranges
-     * implementation for 'circular same fft'
-     * for each index iterating over dest image,
-     *      dest(n) += source(n-*(ker_inf_table++) : n+*(ker_sup_table++))
-     * except for images we dont accumulate over the channels and keep
-     * n_channels different values for each iteration step n
-     * 
-     * offset for X, indices for kernels
-     * improve reduction: https://coderwall.com/p/gocbhg/openmp-improve-reduction-techniques
-    */
+/**
+ * precomputes lookup table for kernel ranges
+ * implementation for 'circular same fft'
+ * for each index iterating over dest image,
+ *      dest(n) += source(n-*(ker_inf_table++) : n+*(ker_sup_table++))
+ * except for images we dont accumulate over the channels and keep
+ * n_channels different values for each iteration step n
+ * 
+ * offset for X, indices for kernels
+ * improve reduction: https://coderwall.com/p/gocbhg/openmp-improve-reduction-techniques
+ */
 template<typename T>
 void fft_h2(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kernel1D<T>& kernel){
     
@@ -1308,32 +1303,20 @@ void fft_h2(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src, const Kerne
 
     std::vector<size_t> offset_table(new_width, 0);
     std::vector<size_t> size_table(new_width, 0);
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
     for(size_t j = 0; j < k_l_2_a; ++j){
         offset_table[j] = j;
         size_table[j] = j + k_l_2_b + 1;
     }
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
     for(size_t j = k_l_2_a; j < new_width-k_l_2_b; ++j){
         offset_table[j] = k_l_2_a;
         size_table[j] = ker_len;
     }
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
     for(size_t j = new_width-k_l_2_b; j < new_width; ++j){
         offset_table[j] = k_l_2_a;
         size_table[j] = k_l_2_a + new_width - j;
     }
 
     std::vector<T> priv_buf(new_channels, 0);
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
     for(size_t i = 0; i < new_height; ++i){
         for(size_t j = 0; j < new_width; ++j){
             
@@ -1361,9 +1344,6 @@ void fft_h(BitMapRGBA& dest, const BitMapRGBA& src, const Kernel1D<T>& kernel){
     size_t k_l_2_a = (ker_size-1) / 2;
     size_t k_l_2_b = ker_size / 2;
 
-    #ifdef _OPENMP
-        #pragma omp parallel for
-    #endif
     // horizontal FT
     for(size_t i = 0; i < new_height; ++i){
         // part1
@@ -1372,16 +1352,16 @@ void fft_h(BitMapRGBA& dest, const BitMapRGBA& src, const Kernel1D<T>& kernel){
             T g = 0;
             T b = 0;
             T a = 0;
-            for(size_t k = k_l_2_a; k < ker_size; ++k){
+            for(size_t k = (k_l_2_a - j); k < ker_size; ++k){
                 r += static_cast<T>( src(i, j-k_l_2_a+k)        & 0xff) * kernel(k, 0);
                 g += static_cast<T>((src(i, j-k_l_2_a+k) >> 8 ) & 0xff) * kernel(k, 1);
                 b += static_cast<T>((src(i, j-k_l_2_a+k) >> 16) & 0xff) * kernel(k, 2);
                 a += static_cast<T>((src(i, j-k_l_2_a+k) >> 24) & 0xff) * kernel(k, 3);
-                dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
-                             ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
-                             ((static_cast<uint32_t>(b) << 16) & 0xff0000) |
-                             ((static_cast<uint32_t>(a) << 24) & 0xff000000);
             }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000) |
+                         ((static_cast<uint32_t>(a) << 24) & 0xff000000);
         }
         // part2
         for(size_t j = k_l_2_a; j < new_width-k_l_2_b; ++j){
@@ -1389,16 +1369,16 @@ void fft_h(BitMapRGBA& dest, const BitMapRGBA& src, const Kernel1D<T>& kernel){
             T g = 0;
             T b = 0;
             T a = 0;
-            for(size_t k = k_l_2_a; k < ker_size; ++k){
+            for(size_t k = 0; k < ker_size; ++k){
                 r += static_cast<T>( src(i, j-k_l_2_a+k)        & 0xff) * kernel(k, 0);
                 g += static_cast<T>((src(i, j-k_l_2_a+k) >> 8 ) & 0xff) * kernel(k, 1);
                 b += static_cast<T>((src(i, j-k_l_2_a+k) >> 16) & 0xff) * kernel(k, 2);
                 a += static_cast<T>((src(i, j-k_l_2_a+k) >> 24) & 0xff) * kernel(k, 3);
-                dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
-                             ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
-                             ((static_cast<uint32_t>(b) << 16) & 0xff0000) |
-                             ((static_cast<uint32_t>(a) << 24) & 0xff000000);
             }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000) |
+                         ((static_cast<uint32_t>(a) << 24) & 0xff000000);
         }
         // part3
         for(size_t j = new_width-k_l_2_b; j < new_width; ++j){
@@ -1406,16 +1386,16 @@ void fft_h(BitMapRGBA& dest, const BitMapRGBA& src, const Kernel1D<T>& kernel){
             T g = 0;
             T b = 0;
             T a = 0;
-            for(size_t k = k_l_2_a; k < ker_size; ++k){
+            for(size_t k = 0; k < k_l_2_a + (new_width-j); ++k){
                 r += static_cast<T>( src(i, j-k_l_2_a+k)        & 0xff) * kernel(k, 0);
                 g += static_cast<T>((src(i, j-k_l_2_a+k) >> 8 ) & 0xff) * kernel(k, 1);
                 b += static_cast<T>((src(i, j-k_l_2_a+k) >> 16) & 0xff) * kernel(k, 2);
                 a += static_cast<T>((src(i, j-k_l_2_a+k) >> 24) & 0xff) * kernel(k, 3);
-                dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
-                             ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
-                             ((static_cast<uint32_t>(b) << 16) & 0xff0000) |
-                             ((static_cast<uint32_t>(a) << 24) & 0xff000000);
             }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000) |
+                         ((static_cast<uint32_t>(a) << 24) & 0xff000000);
         }
     }
 }
@@ -1428,52 +1408,32 @@ void fft_h2(BitMapRGBA& dest, const BitMapRGBA& src, const Kernel1D<T>& kernel){
 
     size_t ker_len = kernel.getLength();
     size_t k_l_2_a = (ker_len-1) / 2;
-    size_t k_l_2_b = ker_len / 2;
 
-    std::vector<size_t> offset_table(new_width, 0);
-    std::vector<size_t> size_table(new_width, 0);
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
-    for(size_t j = 0; j < k_l_2_a; ++j){
-        offset_table[j] = j;
-        size_table[j] = j + k_l_2_b + 1;
-    }
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
-    for(size_t j = k_l_2_a; j < new_width-k_l_2_b; ++j){
-        offset_table[j] = k_l_2_a;
-        size_table[j] = ker_len;
-    }
-    #ifdef _OPENMP
-        #pragma omp simd
-    #endif
-    for(size_t j = new_width-k_l_2_b; j < new_width; ++j){
-        offset_table[j] = k_l_2_a;
-        size_table[j] = k_l_2_a + new_width - j;
-    }
-    #ifdef _OPENMP
-        #pragma omp parallel for collapse(2)
-    #endif
+    ker_mask<true> km_w(ker_len, k_l_2_a, new_width);
     for(size_t i = 0; i < new_height; ++i){
         for(size_t j = 0; j < new_width; ++j){
-            size_t l_offset = offset_table[j];
-            size_t ker_size = size_table[j];
             T r = 0;
             T g = 0;
             T b = 0;
             T a = 0;
-            for(size_t k = 0; k < ker_size; ++k){
-                r += ( src(i, j-l_offset+k)        & 0xff) * kernel(k_l_2_a-l_offset+k, 0);
-                g += ((src(i, j-l_offset+k) >> 8 ) & 0xff) * kernel(k_l_2_a-l_offset+k, 1);
-                b += ((src(i, j-l_offset+k) >> 16) & 0xff) * kernel(k_l_2_a-l_offset+k, 2);
-                a += ((src(i, j-l_offset+k) >> 24) & 0xff) * kernel(k_l_2_a-l_offset+k, 3);
-                dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
-                             ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
-                             ((static_cast<uint32_t>(b) << 16) & 0xff0000) |
-                             ((static_cast<uint32_t>(a) << 24) & 0xff000000);
+            for(size_t k = 0; k < k_l_2_a; ++k){
+                size_t offset = km_w(j, k);
+                r += ( src(i, j-offset)        & 0xff) * kernel(k, 0);
+                g += ((src(i, j-offset) >> 8 ) & 0xff) * kernel(k, 1);
+                b += ((src(i, j-offset) >> 16) & 0xff) * kernel(k, 2);
+                a += ((src(i, j-offset) >> 24) & 0xff) * kernel(k, 3);
             }
+            for(size_t k = k_l_2_a; k < ker_len; ++k){
+                size_t offset = km_w(j, k);
+                r += ( src(i, j+offset)          & 0xff) * kernel(k, 0);
+                g += ((src(i, j+offset) >> 8 )   & 0xff) * kernel(k, 1);
+                b += ((src(i, j+offset) >> 16)   & 0xff) * kernel(k, 2);
+                a += ((src(i, j+offset) >> 24)   & 0xff) * kernel(k, 3);
+            }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000) |
+                         ((static_cast<uint32_t>(a) << 24) & 0xff000000);
         }
     }
 }
@@ -1487,9 +1447,6 @@ void fft_h(BitMapRGB& dest, const BitMapRGB& src, const Kernel1D<T>& kernel){
     size_t k_l_2_a = (ker_size-1) / 2;
     size_t k_l_2_b = ker_size / 2;
 
-    #ifdef _OPENMP
-        #pragma omp parallel for
-    #endif
     // horizontal FT
     for(size_t i = 0; i < new_height; ++i){
         // part1
@@ -1497,42 +1454,76 @@ void fft_h(BitMapRGB& dest, const BitMapRGB& src, const Kernel1D<T>& kernel){
             T r = 0;
             T g = 0;
             T b = 0;
-            for(size_t k = k_l_2_a; k < ker_size; ++k){
+            for(size_t k = (k_l_2_a - j); k < ker_size; ++k){
                 r += static_cast<T>( src(i, j-k_l_2_a+k)        & 0xff) * kernel(k, 0);
                 g += static_cast<T>((src(i, j-k_l_2_a+k) >> 8 ) & 0xff) * kernel(k, 1);
                 b += static_cast<T>((src(i, j-k_l_2_a+k) >> 16) & 0xff) * kernel(k, 2);
-                dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
-                             ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
-                             ((static_cast<uint32_t>(b) << 16) & 0xff0000);
             }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000);
         }
         // part2
         for(size_t j = k_l_2_a; j < new_width-k_l_2_b; ++j){
             T r = 0;
             T g = 0;
             T b = 0;
-            for(size_t k = k_l_2_a; k < ker_size; ++k){
+            for(size_t k = 0; k < ker_size; ++k){
                 r += static_cast<T>( src(i, j-k_l_2_a+k)        & 0xff) * kernel(k, 0);
                 g += static_cast<T>((src(i, j-k_l_2_a+k) >> 8 ) & 0xff) * kernel(k, 1);
                 b += static_cast<T>((src(i, j-k_l_2_a+k) >> 16) & 0xff) * kernel(k, 2);
-                dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
-                             ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
-                             ((static_cast<uint32_t>(b) << 16) & 0xff0000);
             }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000);
         }
         // part3
         for(size_t j = new_width-k_l_2_b; j < new_width; ++j){
             T r = 0;
             T g = 0;
             T b = 0;
-            for(size_t k = k_l_2_a; k < ker_size; ++k){
+            for(size_t k = 0; k < k_l_2_a + (new_width-j); ++k){
+                //assert(j-k_l_2_a+k < new_width);
                 r += static_cast<T>( src(i, j-k_l_2_a+k)        & 0xff) * kernel(k, 0);
                 g += static_cast<T>((src(i, j-k_l_2_a+k) >> 8 ) & 0xff) * kernel(k, 1);
                 b += static_cast<T>((src(i, j-k_l_2_a+k) >> 16) & 0xff) * kernel(k, 2);
-                dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
-                             ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
-                             ((static_cast<uint32_t>(b) << 16) & 0xff0000);
             }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000);
+        }
+    }
+}
+
+template<typename T>
+void fft_h2(BitMapRGB& dest, const BitMapRGB& src, const Kernel1D<T>& kernel){
+    size_t new_height = dest.getHeight();
+    size_t new_width = dest.getWidth();
+
+    size_t ker_len = kernel.getLength();
+    size_t k_l_2_a = (ker_len-1) / 2;
+
+    ker_mask<true> km_w(ker_len, k_l_2_a, new_width);
+    for(size_t i = 0; i < new_height; ++i){
+        for(size_t j = 0; j < new_width; ++j){
+            T r = 0;
+            T g = 0;
+            T b = 0;
+            for(size_t k = 0; k < k_l_2_a; ++k){
+                size_t offset = km_w(j, k);
+                r += ( src(i, j-offset)        & 0xff) * kernel(k, 0);
+                g += ((src(i, j-offset) >> 8 ) & 0xff) * kernel(k, 1);
+                b += ((src(i, j-offset) >> 16) & 0xff) * kernel(k, 2);
+            }
+            for(size_t k = k_l_2_a; k < ker_len; ++k){
+                size_t offset = km_w(j, k);
+                r += ( src(i, j+offset)          & 0xff) * kernel(k, 0);
+                g += ((src(i, j+offset) >> 8 )   & 0xff) * kernel(k, 1);
+                b += ((src(i, j+offset) >> 16)   & 0xff) * kernel(k, 2);
+            }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000);
         }
     }
 }

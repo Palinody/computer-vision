@@ -1,5 +1,13 @@
 
 /**
+TODO:
+    fix "faster" FFTs
+    edit: rgb - rgba should be alright. Correct Pixelmap "faster" fft
+*/
+
+
+
+/**
  * http://libpng.org/pub/png/libpng-1.0.3-manual.html
  * http://www.libpng.org/pub/png/spec/1.2/PNG-Rationale.html#R.Byte-order
    Color    Allowed    Interpretation
@@ -82,6 +90,53 @@ int main()
 
 
 
+template<typename T>
+void fft_h2(BitMapRGB& dest, const BitMapRGB& src, const Kernel1D<T>& kernel){
+    size_t new_height = dest.getHeight();
+    size_t new_width = dest.getWidth();
+
+    size_t ker_len = kernel.getLength();
+    size_t k_l_2_a = (ker_len-1) / 2;
+    /*
+    size_t k_l_2_b = ker_len / 2;
+
+    std::vector<size_t> offset_table(new_width, 0);
+    std::vector<size_t> size_table(new_width, 0);
+    for(size_t j = 0; j < k_l_2_a; ++j){
+        offset_table[j] = j;
+        size_table[j] = j + k_l_2_b + 1;
+    }
+    for(size_t j = k_l_2_a; j < new_width-k_l_2_b; ++j){
+        offset_table[j] = k_l_2_a;
+        size_table[j] = ker_len;
+    }
+    for(size_t j = new_width-k_l_2_b; j < new_width; ++j){
+        offset_table[j] = k_l_2_a;
+        size_table[j] = k_l_2_a + new_width - j;
+    }
+    for(size_t i = 0; i < new_height; ++i){
+        for(size_t j = 0; j < new_width; ++j){
+            size_t l_offset = offset_table[j];
+            size_t ker_size = size_table[j];
+            T r = 0;
+            T g = 0;
+            T b = 0;
+            for(size_t k = 0; k < ker_size; ++k){
+                
+                //r += ( src(i, j-l_offset+k)        & 0xff) * kernel(k, 0);
+                //g += ((src(i, j-l_offset+k) >> 8 ) & 0xff) * kernel(k, 1);
+                //b += ((src(i, j-l_offset+k) >> 16) & 0xff) * kernel(k, 2);
+                
+                r += ( src(i, j-l_offset+k)        & 0xff) * kernel(k_l_2_a-l_offset+k, 0);
+                g += ((src(i, j-l_offset+k) >> 8 ) & 0xff) * kernel(k_l_2_a-l_offset+k, 1);
+                b += ((src(i, j-l_offset+k) >> 16) & 0xff) * kernel(k_l_2_a-l_offset+k, 2);
+            }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000);
+        }
+    }
+}
 
 
 

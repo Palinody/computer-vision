@@ -1,24 +1,32 @@
 > C++ repository used for educational purposes in computer vision. Contains a variety of algorithms that will be used for a SLAM project using [SIFT](https://en.wikipedia.org/wiki/Scale-invariant_feature_transform) algorithm. The ultimate goal of the project is to launch it on embedded systems (smartphones, robots)
 
 ### TODO
-fix: clang++
-
-fix: fft works with images with limited size on my machine: approx. 900x900x4 (no memory optim.)
 
 add: gray and gray + alpha bitmaps (rest of lib already took them into consideration, no mod. needed)
 
-do: all the rest...
-
+make it c++-17 compatible?
+- only c++-20 feature used: `requires`
+- only c++-17 feature used: `string_view` (not sure it's the only one)
 
 ### Compilation
+- g++
 ```sh
 $ g++-10 -std=c++20 -Wall -O3 -ffast-math -march=native -o main main.cpp -lpng
+```
+- clang++
+```
+$ clang++-10 -std=c++20 -Wall -pedantic -O3 -ffast-math -march=native -o main main.cpp -lpng
+```
+
+### Execution
+
+```
 $ ./a.out
 ```
 
 ### Requirements
 - c++-20
-- g++-10 (recom. bec. only compiler tested and we need c++-20)
+- g++-10 or clang++-10
 - [libpng](https://github.com/glennrp/libpng)
 
 ### Custom containers

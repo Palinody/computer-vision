@@ -5,7 +5,7 @@
 #include <memory>
 
 // non random distributions
-enum Distr{ GAUSS };
+enum Distr : unsigned char{ GAUSS };
 
 template<typename T>
 class Kernel1D{

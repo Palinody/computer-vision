@@ -74,8 +74,10 @@ void downscale_ex(){
     write_png_file(to_file, pixelmap8);
 }
 
-void blurr_ex(){
-    std::string_view from_file {"../../test-database/original/000369_left.png"};
+void blurr(){
+    Timer<nano_t> timer;
+
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
     std::string_view to_file {"../../test-database/blurred.png"};
 
     png_dims dims = getDims(from_file);
@@ -98,9 +100,71 @@ void blurr_ex(){
     output = output.transpose();
     */
     PixelMap<png_byte> output(dims.height, dims.width, dims.channels);
+    timer.reset();
     fft(output, src, ker);
+    uint64_t elapsed = timer.elapsed();
+
+    printf("Computation time (blurr): %.5f s\n", (elapsed*1e-9f));
 
     printf("channels: %ld\n", output.getChannels());
+    write_png_file(to_file, output);
+}
+
+void blurr_rgba(){
+    Timer<nano_t> timer;
+
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
+    std::string_view to_file {"../../test-database/blurred_rgba.png"};
+
+    png_dims dims = getDims(from_file);
+
+    PixelMap<png_byte> src(dims.height, dims.width, dims.channels);
+    read_png_file(from_file, src);
+    PixelMap<png_byte> inter(src.getHeight(), src.getWidth(), src.getChannels());
+    
+    read_png_file(from_file, src);
+    BitMapRGBA bitmap(src);
+
+    double sd = 1.1;
+    size_t k_w = std::ceil(sd * 6);
+    Kernel1D<float> ker(k_w, src.getChannels(), sd);
+    BitMapRGBA output(dims.height, dims.width);
+    
+    timer.reset();
+    fft(output, bitmap, ker);
+    uint64_t elapsed = timer.elapsed();
+
+    printf("Computation time (blurr rgba): %.5f s\n", (elapsed*1e-9f));
+
+    write_png_file(to_file, output);
+}
+
+void blurr_rgb(){
+    Timer<nano_t> timer;
+
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
+    std::string_view to_file {"../../test-database/blurred_rgb.png"};
+
+    png_dims dims = getDims(from_file);
+
+    PixelMap<png_byte> src(dims.height, dims.width, dims.channels);
+    read_png_file(from_file, src);
+    PixelMap<png_byte> inter(src.getHeight(), src.getWidth(), src.getChannels());
+    
+    read_png_file(from_file, src);
+    BitMapRGB bitmap(src);
+
+    double sd = 1.1;
+    size_t k_w = std::ceil(sd * 6);
+    Kernel1D<float> ker(k_w, src.getChannels(), sd);
+    BitMapRGB output(dims.height, dims.width);
+    
+    timer.reset();
+    fft(output, bitmap, ker);
+    uint64_t elapsed = timer.elapsed();
+
+    printf("Computation time (blurr rgb): %.5f s\n", (elapsed*1e-9f));
+
     write_png_file(to_file, output);
 }
 
@@ -414,7 +478,7 @@ float trilinear_rgb(){
 float difference_of_gaussians(){
     Timer<nano_t> timer;
 
-    std::string_view from_file {"../../test-database/original/000369_left.png"};
+    std::string_view from_file {"../../test-database/other/yuan.png"};
     std::string_view to_file {"../../test-database/diff_of_gaussians.png"};
 
     png_dims dims = getDims(from_file);
@@ -424,7 +488,7 @@ float difference_of_gaussians(){
     PixelMap<png_byte> temp = src;
     PixelMap<png_byte> dest(src.getHeight(), src.getWidth(), src.getChannels());
 
-    double sigma = 1;
+    double sigma = 0.2;
     timer.reset();
     DoG(dest, temp, src, sigma, 2*sigma);
 
@@ -438,7 +502,7 @@ float difference_of_gaussians(){
 float difference_of_gaussians_rgba(){
     Timer<nano_t> timer;
 
-    std::string_view from_file {"../../test-database/original/000369_left.png"};
+    std::string_view from_file {"../../test-database/other/yuan.png"};
     std::string_view to_file {"../../test-database/diff_of_gaussians_rgba.png"};
 
     png_dims dims = getDims(from_file);
@@ -463,7 +527,7 @@ float difference_of_gaussians_rgba(){
 float difference_of_gaussians_rgb(){
     Timer<nano_t> timer;
 
-    std::string_view from_file {"../../test-database/original/000369_left.png"};
+    std::string_view from_file {"../../test-database/other/yuan.png"};
     std::string_view to_file {"../../test-database/diff_of_gaussians_rgb.png"};
 
     png_dims dims = getDims(from_file);
@@ -507,6 +571,34 @@ inline std::string getFileName(std::string path, int idx){
     path += std::string(fname_ext) + ".png";
 
     return path;
+}
+
+void gen_noise(){
+    size_t height = 5000;//2160;
+    size_t width = 514;//960;
+    //PixelMap<png_byte> test(height, width, 4);
+    BitMapRGB test(height, width);
+
+    uniform_dist<uint8_t> r(0, 0xff); // 0 to 255
+    for(size_t i = 0; i < height; ++i){
+        for(size_t j = 0; j < width; ++j){
+            // uncomment if using BitmapRGBA
+            test(i, j) = ((r() << 0) & 0xff) |
+                         ((r() << 8) & 0xff00) |
+                         ((r() << 16) & 0xff0000)|
+                         ((r() << 24) & 0xff000000);
+            // uncomment if using PixelMap<png_byte>
+            /*
+            for(size_t c = 0; c < test.getChannels(); ++c){
+                test(i, j, c) = r();
+            }
+            */
+        }
+    }
+    //MipMap<PixelMap<png_byte>> mipmap(test);
+    MipMap<BitMapRGB> mipmap(test);
+    write_png_file("../../test-database/test.png", mipmap[0]);
+    mipmap.savefig("../../test-database/mipmap_noise.png");
 }
 
 void generate_goomer(){
@@ -596,7 +688,7 @@ int main(){
      * Cooley turkey algorithm
      * https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
     */
-    
+    /*
     nearestNeighbor();
     nearestNeighbor_bitmap_rgba();
     nearestNeighbor_bitmap_rgb();
@@ -608,41 +700,21 @@ int main(){
     bicubic();
     bicubic_bitmap_rgba();
     bicubic_bitmap_rgb();
-
+    */
     difference_of_gaussians();
     difference_of_gaussians_rgba();
     difference_of_gaussians_rgb();
-
-    trilinear();
-    trilinear_rgba();
-    trilinear_rgb();
-
+    
+    //trilinear();
+    //trilinear_rgba();
+    //trilinear_rgb();
+    
     /*
-    size_t height = 5000;//2160;
-    size_t width = 514;//960;
-    //PixelMap<png_byte> test(height, width, 4);
-    BitMapRGB test(height, width);
-
-    uniform_dist<uint8_t> r(0, 0xff); // 0 to 255
-    for(size_t i = 0; i < height; ++i){
-        for(size_t j = 0; j < width; ++j){
-
-            test(i, j) = ((r() << 0) & 0xff) |
-                         ((r() << 8) & 0xff00) |
-                         ((r() << 16) & 0xff0000)|
-                         ((r() << 24) & 0xff000000);
-            
-            for(size_t c = 0; c < test.getChannels(); ++c){
-                test(i, j, c) = r();
-            }
-        }
-    }
-    MipMap<PixelMap<png_byte>> mipmap(test);
-    MipMap<BitMapRGB> mipmap(test);
-    write_png_file("../../test-database/test.png", mipmap[0]);
-    mipmap.savefig("...");
-    */
     plot_mipmap();
     generate_goomer();
+    */
+    blurr();
+    blurr_rgb();
+    blurr_rgba();
     return 0;
 }
