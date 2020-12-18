@@ -478,7 +478,7 @@ float trilinear_rgb(){
 float difference_of_gaussians(){
     Timer<nano_t> timer;
 
-    std::string_view from_file {"../../test-database/other/yuan.png"};
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
     std::string_view to_file {"../../test-database/diff_of_gaussians.png"};
 
     png_dims dims = getDims(from_file);
@@ -502,7 +502,7 @@ float difference_of_gaussians(){
 float difference_of_gaussians_rgba(){
     Timer<nano_t> timer;
 
-    std::string_view from_file {"../../test-database/other/yuan.png"};
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
     std::string_view to_file {"../../test-database/diff_of_gaussians_rgba.png"};
 
     png_dims dims = getDims(from_file);
@@ -527,7 +527,7 @@ float difference_of_gaussians_rgba(){
 float difference_of_gaussians_rgb(){
     Timer<nano_t> timer;
 
-    std::string_view from_file {"../../test-database/other/yuan.png"};
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
     std::string_view to_file {"../../test-database/diff_of_gaussians_rgb.png"};
 
     png_dims dims = getDims(from_file);
