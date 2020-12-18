@@ -136,7 +136,15 @@ void blurr_rgba(){
 
     printf("Computation time (blurr rgba): %.5f s\n", (elapsed*1e-9f));
 
-    write_png_file(to_file, output);
+    // output images are invisible if we take an RGB img as an RGBA img
+    // so we convert the rgba to rgb to discard alpha channel
+    if(dims.channels == 3){
+        printf("Converting rgba image to rgb before saving\n");
+        BitMapRGB bitmap_rgb(output);
+        write_png_file(to_file, bitmap_rgb);
+    }else{
+        write_png_file(to_file, output);
+    }
 }
 
 void blurr_rgb(){
@@ -688,7 +696,7 @@ int main(){
      * Cooley turkey algorithm
      * https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
     */
-    /*
+    
     nearestNeighbor();
     nearestNeighbor_bitmap_rgba();
     nearestNeighbor_bitmap_rgb();
@@ -700,14 +708,14 @@ int main(){
     bicubic();
     bicubic_bitmap_rgba();
     bicubic_bitmap_rgb();
-    */
+    
     difference_of_gaussians();
     difference_of_gaussians_rgba();
     difference_of_gaussians_rgb();
     
-    //trilinear();
-    //trilinear_rgba();
-    //trilinear_rgb();
+    trilinear();
+    trilinear_rgba();
+    trilinear_rgb();
     
     /*
     plot_mipmap();
