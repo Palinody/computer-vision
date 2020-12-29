@@ -1,0 +1,76 @@
+
+/**
+ * http://libpng.org/pub/png/libpng-1.0.3-manual.html
+ * http://www.libpng.org/pub/png/spec/1.2/PNG-Rationale.html#R.Byte-order
+   Color    Allowed    Interpretation
+   Type    Bit Depths
+   
+   0       1,2,4,8,16  Each pixel is a grayscale sample.
+   
+   2       8,16        Each pixel is an R,G,B triple.
+   
+   3       1,2,4,8     Each pixel is a palette index;
+                       a PLTE chunk must appear.
+   
+   4       8,16        Each pixel is a grayscale sample,
+                       followed by an alpha sample.
+   
+   6       8,16        Each pixel is an R,G,B triple,
+                       followed by an alpha sample.
+*/
+#include <stdio.h>
+#include <iostream>
+
+#include <numeric>
+
+template<typename T>
+void print_binary(const T number, size_t recursion_depth)
+{
+    if (number >> 1) {
+        ++recursion_depth;
+        print_binary(number >> 1, recursion_depth);
+    }
+    if(recursion_depth % 8 == 0) putc(' ', stdout);
+    putc((number & 1) ? '1' : '0', stdout);
+}
+
+int main()
+{
+    // uint32_t rgba 4x255 in hexa
+    // 0xFFFFFFFF
+    // becomes in binary
+    //                                           1111:1111 1111:1111 1111:1111 1111:1111   
+    // uint64_t rgba 4x0 in hexa
+    // 0x0000000000000000
+    // becomes in binary
+    // 0000:0000 0000:0000 0000:0000 0000:0000 | 0000:0000 0000:0000 0000:0000 0000:0000
+    // we shift the uint32_t rgba in order to obtain uint64_t rgba
+    // 0000:0000 1111:1111 0000:0000 1111:1111 | 0000:0000 1111:1111 0000:0000 1111:1111
+    
+    // 255 offset at each uint64_t proper position
+    uint64_t offset = 0x00ff00ff00ff00ff;
+    //uint64_t offset = 0x0000000000000000;
+    uint32_t pixel = (((unsigned char)255 << 0 ) & 0xff) |
+                     (((unsigned char)255 << 8 ) & 0xff00) |
+                     (((unsigned char)255 << 16) & 0xff0000) |
+                     (((unsigned char)255 << 24) & 0xff000000);
+    
+    printf("offset init %016lx\n", offset);
+    printf("offset init\n");
+    print_binary(offset, 0);
+    printf("\n\npixel %08x\n", pixel);
+    printf("pixel \n");
+    print_binary(pixel, 0);
+    
+    uint64_t pixel_u64 = pixel;
+    ///*
+    offset += ((pixel_u64 & 0xff000000) << 24) | \
+              ((pixel_u64 & 0xff0000) <<  16) | \
+              ((pixel_u64 & 0xff00) <<  8) | \
+              ((pixel_u64 & 0xff) <<  0);
+    //*/
+    printf("\n\npixel and offset uint64_t: %016lx\n", offset);
+    printf("pixel uint64_t with offset\n");
+    print_binary(offset, 0);
+    return 0;
+}
