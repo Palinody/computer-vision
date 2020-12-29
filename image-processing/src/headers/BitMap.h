@@ -353,9 +353,6 @@ PixelMap<T>& PixelMap<T>::subtract(const PixelMap<T>& other){
     for(size_t c = 0; c < _channels; ++c) max_val[c] = 0;
 
     std::vector<uint16_t> buf(_width*_height*_channels);
-    #ifdef _OPENMP
-        #pragma omp parallel for simd collapse(3)
-    #endif
     for(size_t i = 0; i < _height; ++i){
         for(size_t j = 0; j < _width; ++j){
             for(size_t c = 0; c < _channels; ++c){
@@ -366,9 +363,6 @@ PixelMap<T>& PixelMap<T>::subtract(const PixelMap<T>& other){
             }
         }
     }
-    #ifdef _OPENMP
-        #pragma omp parallel for simd collapse(3)
-    #endif
     for(size_t i = 0; i < _height; ++i){
         for(size_t j = 0; j < _width; ++j){
             for(size_t c = 0; c < _channels; ++c){

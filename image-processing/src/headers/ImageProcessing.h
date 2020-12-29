@@ -96,9 +96,6 @@ void nearestNeighbor(PixelMap<png_byte>& dest, const PixelMap<png_byte>& src){
         for(size_t j = 0; j < new_w; ++j){
             size_t orig_i = h_orig_table[i];
             size_t orig_j = w_orig_table[j];
-            #ifdef _OPENMP
-                #pragma omp simd
-            #endif
             for(size_t c = 0; c < channels; ++c){
                 dest(i, j, c) = src(orig_i, orig_j, c);
             }
