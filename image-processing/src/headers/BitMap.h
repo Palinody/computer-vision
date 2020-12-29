@@ -10,6 +10,10 @@
 #include <memory>
 // debug
 #include <iostream>
+<<<<<<< HEAD
+=======
+#include <vector>
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 
 #include "PRNG.h"
 
@@ -65,9 +69,15 @@ public:
     inline const T& operator()(size_t i, size_t j, size_t c) const;
     
     inline T* begin();
+<<<<<<< HEAD
 	inline T* end();
     inline const T* begin() const;
 	inline const T* end() const;
+=======
+    inline T* end();
+    inline const T* begin() const;
+    inline const T* end() const;
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 
     inline T* rowBegin(size_t row);
     inline T* rowEnd(size_t row);
@@ -340,6 +350,7 @@ PixelMap<T>& PixelMap<T>::subtract(const PixelMap<T>& other){
 
     assert(has_same_dims_as(other));
 
+<<<<<<< HEAD
     uint16_t min_val[_channels];
     uint16_t max_val[_channels];
     #ifdef _OPENMP
@@ -354,6 +365,14 @@ PixelMap<T>& PixelMap<T>::subtract(const PixelMap<T>& other){
     #ifdef _OPENMP
         #pragma omp parallel for simd collapse(3)
     #endif
+=======
+    std::vector<uint16_t> min_val(_channels);
+    std::vector<uint16_t> max_val(_channels);
+    for(size_t c = 0; c < _channels; ++c) min_val[c] = 510; // 2*255
+    for(size_t c = 0; c < _channels; ++c) max_val[c] = 0;
+
+    std::vector<uint16_t> buf(_width*_height*_channels);
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
     for(size_t i = 0; i < _height; ++i){
         for(size_t j = 0; j < _width; ++j){
             for(size_t c = 0; c < _channels; ++c){
@@ -364,6 +383,7 @@ PixelMap<T>& PixelMap<T>::subtract(const PixelMap<T>& other){
             }
         }
     }
+<<<<<<< HEAD
     #ifdef _OPENMP
         #pragma omp parallel for simd collapse(3)
     #endif
@@ -371,6 +391,12 @@ PixelMap<T>& PixelMap<T>::subtract(const PixelMap<T>& other){
         for(size_t j = 0; j < _width; ++j){
             for(size_t c = 0; c < _channels; ++c){
                 float fact = 255/(max_val[c]-min_val[c]+1e-10f/* == 0 ? 1e-10f : max_val[c]-min_val[c]*/);
+=======
+    for(size_t i = 0; i < _height; ++i){
+        for(size_t j = 0; j < _width; ++j){
+            for(size_t c = 0; c < _channels; ++c){
+                float fact = 255.0f/(max_val[c]-min_val[c]+1e-10f/* == 0 ? 1e-10f : max_val[c]-min_val[c]*/);
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
                 (*this)(i, j, c) = static_cast<png_byte>((buf[c+(j+i*_width)*_channels] - min_val[c]) * fact);
             }
         }
@@ -569,7 +595,11 @@ BitMapRGBA& BitMapRGBA::subtract_rgb(const BitMapRGBA& other){
 
     uint64_t min_val = 0x000001fe01fe01fe;
     uint64_t max_val = 0x0;
+<<<<<<< HEAD
     uint64_t buf[_width*_height] = {  };
+=======
+    std::vector<uint64_t> buf(_width*_height, 0);
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
     for(size_t n = 0; n < _width*_height; ++n) buf[n] = 0x000000ff00ff00ff;
     
     const uint32_t *this_it = begin();
@@ -604,9 +634,15 @@ BitMapRGBA& BitMapRGBA::subtract_rgb(const BitMapRGBA& other){
         buf[n] -= min_val;
         // shifting the bits so that they line up in proper uint32_t position. Alpha channel is copied
         *this_it_update = ((*this_it_update) & 0xff000000) |
+<<<<<<< HEAD
                           ((static_cast<uint32_t>(((buf[n] & 0xff00000000) >> 32) * b_fact)/* & 0xff*/) << 16) |
                           ((static_cast<uint32_t>(((buf[n] & 0x0000ff0000) >> 16) * g_fact)/* & 0xff*/) << 8 ) |
                           ((static_cast<uint32_t>(((buf[n] & 0x00000000ff)      ) * r_fact)/* & 0xff*/)      );
+=======
+                          ((static_cast<uint32_t>(((buf[n] & 0x000000ff00000000) >> 32) * b_fact)/* & 0xff*/) << 16) |
+                          ((static_cast<uint32_t>(((buf[n] & 0x0000000000ff0000) >> 16) * g_fact)/* & 0xff*/) << 8 ) |
+                          ((static_cast<uint32_t>(((buf[n] & 0x00000000000000ff)      ) * r_fact)/* & 0xff*/)      );
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
     }
     return *this;
 }
@@ -615,7 +651,11 @@ BitMapRGBA& BitMapRGBA::subtract_rgba(const BitMapRGBA& other){
 
     uint64_t min_val = 0x01fe01fe01fe01fe;
     uint64_t max_val = 0x0;
+<<<<<<< HEAD
     uint64_t buf[_width*_height] = {  };
+=======
+    std::vector<uint64_t> buf(_width*_height, 0);
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
     for(size_t n = 0; n < _width*_height; ++n) buf[n] = 0x00ff00ff00ff00ff;
     
     const uint32_t *this_it = begin();
@@ -654,10 +694,17 @@ BitMapRGBA& BitMapRGBA::subtract_rgba(const BitMapRGBA& other){
         //res = (buf[n] - min_val) * fact;
         buf[n] -= min_val;
         // shifting the bits so that they line up in proper uint32_t position
+<<<<<<< HEAD
         *this_it_update = ((static_cast<uint32_t>(((buf[n] & 0xff0000000000) >> 48) * a_fact)/* & 0xff*/) << 24) |
                           ((static_cast<uint32_t>(((buf[n] & 0x00ff00000000) >> 32) * b_fact)/* & 0xff*/) << 16) |
                           ((static_cast<uint32_t>(((buf[n] & 0x000000ff0000) >> 16) * g_fact)/* & 0xff*/) << 8 ) |
                           ((static_cast<uint32_t>(((buf[n] & 0x0000000000ff)      ) * r_fact)/* & 0xff*/)      );
+=======
+        *this_it_update = ((static_cast<uint32_t>(((buf[n] & 0x00ff000000000000) >> 48) * a_fact)/* & 0xff*/) << 24) |
+                          ((static_cast<uint32_t>(((buf[n] & 0x000000ff00000000) >> 32) * b_fact)/* & 0xff*/) << 16) |
+                          ((static_cast<uint32_t>(((buf[n] & 0x0000000000ff0000) >> 16) * g_fact)/* & 0xff*/) << 8 ) |
+                          ((static_cast<uint32_t>(((buf[n] & 0x00000000000000ff)      ) * r_fact)/* & 0xff*/)      );
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
     }
     return *this;
 }
@@ -964,7 +1011,11 @@ BitMapRGB& BitMapRGB::subtract(const BitMapRGB& other){
 
     uint64_t min_val = 0x01fe01fe01fe;
     uint64_t max_val = 0x0;
+<<<<<<< HEAD
     uint64_t buf[_width*_height] = {  };
+=======
+    std::vector<uint64_t> buf(_width*_height, 0);
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
     for(size_t n = 0; n < _width*_height; ++n) buf[n] = 0x00ff00ff00ff;
     
     const uint32_t *this_it = begin();

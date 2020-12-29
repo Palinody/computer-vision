@@ -1,5 +1,16 @@
 
 /**
+<<<<<<< HEAD
+=======
+TODO:
+    fix "faster" FFTs
+    edit: rgb - rgba should be alright. Correct Pixelmap "faster" fft
+*/
+
+
+
+/**
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
  * http://libpng.org/pub/png/libpng-1.0.3-manual.html
  * http://www.libpng.org/pub/png/spec/1.2/PNG-Rationale.html#R.Byte-order
    Color    Allowed    Interpretation
@@ -73,4 +84,259 @@ int main()
     printf("pixel uint64_t with offset\n");
     print_binary(offset, 0);
     return 0;
+<<<<<<< HEAD
+=======
+}
+
+
+
+
+
+
+
+
+template<typename T>
+void fft_h2(BitMapRGB& dest, const BitMapRGB& src, const Kernel1D<T>& kernel){
+    size_t new_height = dest.getHeight();
+    size_t new_width = dest.getWidth();
+
+    size_t ker_len = kernel.getLength();
+    size_t k_l_2_a = (ker_len-1) / 2;
+    /*
+    size_t k_l_2_b = ker_len / 2;
+
+    std::vector<size_t> offset_table(new_width, 0);
+    std::vector<size_t> size_table(new_width, 0);
+    for(size_t j = 0; j < k_l_2_a; ++j){
+        offset_table[j] = j;
+        size_table[j] = j + k_l_2_b + 1;
+    }
+    for(size_t j = k_l_2_a; j < new_width-k_l_2_b; ++j){
+        offset_table[j] = k_l_2_a;
+        size_table[j] = ker_len;
+    }
+    for(size_t j = new_width-k_l_2_b; j < new_width; ++j){
+        offset_table[j] = k_l_2_a;
+        size_table[j] = k_l_2_a + new_width - j;
+    }
+    for(size_t i = 0; i < new_height; ++i){
+        for(size_t j = 0; j < new_width; ++j){
+            size_t l_offset = offset_table[j];
+            size_t ker_size = size_table[j];
+            T r = 0;
+            T g = 0;
+            T b = 0;
+            for(size_t k = 0; k < ker_size; ++k){
+                
+                //r += ( src(i, j-l_offset+k)        & 0xff) * kernel(k, 0);
+                //g += ((src(i, j-l_offset+k) >> 8 ) & 0xff) * kernel(k, 1);
+                //b += ((src(i, j-l_offset+k) >> 16) & 0xff) * kernel(k, 2);
+                
+                r += ( src(i, j-l_offset+k)        & 0xff) * kernel(k_l_2_a-l_offset+k, 0);
+                g += ((src(i, j-l_offset+k) >> 8 ) & 0xff) * kernel(k_l_2_a-l_offset+k, 1);
+                b += ((src(i, j-l_offset+k) >> 16) & 0xff) * kernel(k_l_2_a-l_offset+k, 2);
+            }
+            dest(i, j) = ( static_cast<uint32_t>(r)        & 0xff) |
+                         ((static_cast<uint32_t>(g) << 8 ) & 0xff00) |
+                         ((static_cast<uint32_t>(b) << 16) & 0xff0000);
+        }
+    }
+}
+
+
+
+
+
+
+
+#include <stdio.h>
+#include <memory>
+
+class ker_mask{
+public:
+    explicit
+    ker_mask(size_t k_size, size_t k_idx, size_t size);
+
+    inline void update(size_t i);
+    inline size_t& operator[](size_t k);
+    inline const size_t& operator[](size_t k) const;
+
+private:
+    // kernel size, "middle" index in kernel
+    size_t _k_size, _k_idx;
+    // current index, upper bound in convolved image
+    size_t _i, _size;
+    // reference indices lookup table
+    std::unique_ptr<size_t[]> _ker_indices;
+    // runtime indices lookup table updated w.r.t. curr. image idx
+    std::unique_ptr<size_t[]> _ker_indices_update;
+};
+
+ker_mask::ker_mask(size_t k_size, size_t k_idx, size_t size) : 
+        _k_size{ k_size }, _k_idx{ k_idx }, _i{ 0 }, _size{ size },
+        _ker_indices{ std::make_unique<size_t[]>(k_size) },
+        _ker_indices_update{ std::make_unique<size_t[]>(k_size) }{
+    
+    for(size_t k = 0; k < _k_idx; ++k) _ker_indices[k] = _k_idx - k;
+    for(size_t k = _k_idx; k < _k_size; ++k) _ker_indices[k] = k - _k_idx;    
+}
+
+void ker_mask::update(size_t i){
+    ///*
+    for(size_t k = 0; k < _k_idx; ++k) 
+        _ker_indices_update[k] = std::min(_ker_indices[k], i);
+    for(size_t k = _k_idx; k < _k_size; ++k)
+        _ker_indices_update[k] = std::min(_ker_indices[k], _size-1-i);
+    //*/
+    /*
+    for(size_t k = 0; k < _k_size; ++k) 
+        _ker_indices_update[k] = (std::min(_ker_indices[k], i) + std::min(_ker_indices[k], _size-1-i));
+    */
+}
+
+size_t& ker_mask::operator[](size_t k){ return _ker_indices_update[k]; }
+const size_t& ker_mask::operator[](size_t k) const{ return _ker_indices_update[k]; }
+
+int main()
+{
+    size_t img_size = 3;
+    size_t k_size = 4;
+    size_t k_idx = 0;
+    
+    std::unique_ptr<uint32_t[]> img = std::make_unique<uint32_t[]>(img_size);
+    
+    ker_mask k_mask(k_size, k_idx, img_size);
+    
+    for(size_t i = 0; i < img_size; ++i){
+        k_mask.update(i);
+        printf("kernel at i = %ld\n", i);
+        for(size_t k = 0; k < k_size; ++k){
+            printf("%ld, ", k_mask[k]);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, Java, PHP, Ruby, Perl,
+C#, VB, Swift, Pascal, Fortran, Haskell, Objective-C, Assembly, HTML, CSS, JS, SQLite, Prolog.
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
+#include <stdio.h>
+#include <memory>
+
+template<bool Buf = true>
+class ker_mask{
+public:
+    explicit
+    ker_mask(size_t k_size, size_t k_idx, size_t size) requires(!Buf);
+    ker_mask(size_t k_size, size_t k_idx, size_t size) requires(Buf);
+
+    inline void update(size_t i);
+    inline size_t& operator[](size_t k);
+    inline const size_t& operator[](size_t k) const;
+
+private:
+    // kernel size, reference ("middle") index in kernel
+    size_t _k_size, _k_idx;
+    // convolved image size
+    size_t _size;
+    // number of masks in case of buffered class (else 1)
+    size_t _masks;
+    // reference indices lookup table
+    std::unique_ptr<size_t[]> _ker_indices;
+    // runtime indices lookup table updated 
+    // w.r.t. curr. image idx or buffered 
+    // and accessed w.r.t. curr img idx
+    std::unique_ptr<size_t[]> _ker_indices_update;
+};
+
+template<typename Buf>
+ker_mask<Buf>::ker_mask(size_t k_size, size_t k_idx, size_t size) requires(!Buf) :
+        _k_size{ k_size }, _k_idx{ k_idx }, _size{ size }, _masks{ 1 },
+        _ker_indices{ std::make_unique<size_t[]>(k_size) },
+        _ker_indices_update{ std::make_unique<size_t[]>(k_size) }{
+    
+    for(size_t k = 0; k < _k_idx; ++k) _ker_indices[k] = _k_idx - k;
+    for(size_t k = _k_idx; k < _k_size; ++k) _ker_indices[k] = k - _k_idx;
+}
+
+template<typename Buf>
+ker_mask<Buf>::ker_mask(size_t k_size, size_t k_idx, size_t size) requires(Buf) : 
+        _k_size{ k_size }, _k_idx{ k_idx }, _size{ size }, _masks{ std::min(k_size, size) },
+        _ker_indices{ std::make_unique<size_t[]>(k_size) },
+        _ker_indices_update{ std::make_unique<size_t[]>(k_size*_masks) }{
+    
+    for(size_t k = 0; k < _k_idx; ++k) _ker_indices[k] = _k_idx - k;
+    for(size_t k = _k_idx; k < _k_size; ++k) _ker_indices[k] = k - _k_idx;
+    
+    for(size_t m = 0; m < _masks; ++m){
+        for(size_t k = 0; k < _k_idx; ++k) _ker_indices_update[k+m*_k_size] = _k_idx - k;
+        for(size_t k = _k_idx; k < _k_size; ++k) _ker_indices_update[k+m*_k_size] = k - _k_idx;
+    }
+}
+
+template<typename Buf>
+void ker_mask<Buf>::update(size_t i){
+    
+    for(size_t k = 0; k < _k_idx; ++k)
+        _ker_indices_update[k] = std::min(_ker_indices[k], i);
+    for(size_t k = _k_idx; k < _k_size; ++k)
+        _ker_indices_update[k] = std::min(_ker_indices[k], _size-1-i);
+}
+
+template<typename Buf>
+size_t& ker_mask::operator[](size_t k){ return _ker_indices_update[k]; }
+template<typename Buf>
+const size_t& ker_mask::operator[](size_t k) const{ return _ker_indices_update[k]; }
+
+int main()
+{
+    size_t img_size = 4;
+    size_t k_size = 3;
+    size_t k_idx = 0;
+    
+    std::unique_ptr<uint32_t[]> img = std::make_unique<uint32_t[]>(img_size);
+    
+    ker_mask k_mask(k_size, k_idx, img_size);
+    
+    for(size_t i = 0; i < img_size; ++i){
+        k_mask.update(i);
+        printf("kernel at i = %ld\n", i);
+        for(size_t k = 0; k < k_size; ++k){
+            printf("%ld, ", k_mask[k]);
+        }
+        printf("\n");
+    }
+    printf("possibilities: %ld\n", (std::min(k_size, img_size)));
+
+    return 0;
+>>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 }
