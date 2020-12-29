@@ -661,6 +661,95 @@ void generate_goomer(){
     }
 }
 
+inline std::string get_scale_space_file(std::string path, int i, int j){
+    char fname_ext[5];
+    sprintf(fname_ext, "%02d%02d", i, j);
+    path += std::string(fname_ext) + ".png";
+
+    return path;
+}
+
+void generate_scale_space_rgb(){
+
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
+    std::string to_folder {"../../test-database/scale_space/"};
+    png_dims dims = getDims(from_file);
+    PixelMap<png_byte> src(dims.height, dims.width, dims.channels);
+    read_png_file(from_file, src);
+    BitMapRGB bitmap(src);
+
+    int div_h = 1;
+    int div_w = 1;
+    for(int i = 0; i < 4; ++i){
+
+        double sd = std::sqrt(2)/2.0;
+        for(int j = 0; j < 5; ++j){
+            BitMapRGB rescaled(dims.height/div_h, dims.width/div_w);
+            rescale::bicubic(rescaled, bitmap);
+
+            size_t k_w = std::ceil(sd * 6);
+            Kernel1D<float> ker(k_w, src.getChannels(), sd);
+            BitMapRGB output(dims.height/div_h, dims.width/div_w);
+            fft(output, rescaled, ker);
+
+            sd *= std::sqrt(2);
+            write_png_file(get_scale_space_file(to_folder, i, j), output);
+        }
+
+        div_h *= 2;
+        div_w *= 2;
+    }
+}
+
+void generate_DoG(){
+    std::string from_folder {"../../test-database/scale_space/"};
+    std::string to_folder {"../../test-database/scale_space/DoG/"};
+
+    int div_h = 1;
+    int div_w = 1;
+    for(int i = 0; i < 3; ++i){
+
+        double sd = std::sqrt(2)/2.0;
+        for(int j = 0; j < 3; ++j){
+            png_dims dims = getDims(get_scale_space_file(from_folder, i, j));
+            
+            PixelMap<png_byte> curr(dims.height, dims.width, dims.channels);
+            PixelMap<png_byte> next(dims.height, dims.width, dims.channels);
+
+            read_png_file(get_scale_space_file(from_folder, i, j), curr);
+            read_png_file(get_scale_space_file(from_folder, i, j+1), next);
+
+            BitMapRGB bitmap_curr(curr);
+            BitMapRGB bitmap_next(next);
+
+            BitMapRGB bitmap_curr_rescaled(dims.height/div_h, dims.width/div_w);
+            BitMapRGB bitmap_next_rescaled(dims.height/div_h, dims.width/div_w);
+            rescale::bicubic(bitmap_curr_rescaled, bitmap_curr);
+            rescale::bicubic(bitmap_next_rescaled, bitmap_next);
+
+
+            size_t k_w_curr = std::ceil(sd * 6);
+            size_t k_w_next = std::ceil(sd * std::sqrt(2) * 6);
+            Kernel1D<float> ker_curr(k_w_curr, dims.channels, sd);
+            Kernel1D<float> ker_next(k_w_next, dims.channels, sd * std::sqrt(2));
+            
+            BitMapRGB blurred_curr(dims.height/div_h, dims.width/div_w);
+            BitMapRGB blurred_next(dims.height/div_h, dims.width/div_w);
+
+            fft(blurred_curr, bitmap_curr_rescaled, ker_curr);
+            fft(blurred_next, bitmap_next_rescaled, ker_next);
+
+            blurred_curr.subtract(blurred_next);
+
+            sd *= std::sqrt(2);
+            write_png_file(get_scale_space_file(to_folder, i, j), blurred_curr);
+        }
+
+        div_h *= 2;
+        div_w *= 2;
+    }
+}
+
 #include<vector>
 void speedtests(){
     /**
