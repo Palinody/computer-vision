@@ -157,18 +157,18 @@ void blurr_rgb(){
 
     PixelMap<png_byte> src(dims.height, dims.width, dims.channels);
     read_png_file(from_file, src);
-    PixelMap<png_byte> inter(src.getHeight(), src.getWidth(), src.getChannels());
     
-    read_png_file(from_file, src);
     BitMapRGB bitmap(src);
+    BitMapRGB rescaled(dims.height/4, dims.width/4);
+    rescale::bicubic(rescaled, bitmap);
 
-    double sd = 1.1;
+    double sd = std::pow(std::sqrt(2)/2, 1);
     size_t k_w = std::ceil(sd * 6);
     Kernel1D<float> ker(k_w, src.getChannels(), sd);
-    BitMapRGB output(dims.height, dims.width);
-    
+
+    BitMapRGB output(dims.height/4, dims.width/4);
     timer.reset();
-    fft(output, bitmap, ker);
+    fft(output, rescaled, ker);
     uint64_t elapsed = timer.elapsed();
 
     printf("Computation time (blurr rgb): %.5f s\n", (elapsed*1e-9f));
@@ -350,7 +350,7 @@ float bicubic(){
 float bicubic_bitmap_rgba(){
     Timer<nano_t> timer;
 
-    std::string_view from_file {"../../test-database/original/000369_left.png"};
+    std::string_view from_file {"../../test-database/original/000369_left"};
     std::string_view to_file {"../../test-database/bicubic_bitmap_rgba.png"};
 
     png_dims dims = getDims(from_file);
@@ -359,7 +359,7 @@ float bicubic_bitmap_rgba(){
     read_png_file(from_file, pixelmap);
     BitMapRGBA src(pixelmap);
 
-    BitMapRGBA dest(dims.height*10, dims.width*10);
+    BitMapRGBA dest(dims.height/2, dims.width/2);
     timer.reset();
     rescale::bicubic(dest, src);
 
@@ -585,7 +585,7 @@ void gen_noise(){
     size_t height = 5000;//2160;
     size_t width = 514;//960;
     //PixelMap<png_byte> test(height, width, 4);
-    BitMapRGB test(height, width);
+    BitMapRGBA test(height, width);
 
     uniform_dist<uint8_t> r(0, 0xff); // 0 to 255
     for(size_t i = 0; i < height; ++i){
@@ -604,7 +604,7 @@ void gen_noise(){
         }
     }
     //MipMap<PixelMap<png_byte>> mipmap(test);
-    MipMap<BitMapRGB> mipmap(test);
+    MipMap<BitMapRGBA> mipmap(test);
     write_png_file("../../test-database/test.png", mipmap[0]);
     mipmap.savefig("../../test-database/mipmap_noise.png");
 }
@@ -661,6 +661,95 @@ void generate_goomer(){
     }
 }
 
+inline std::string get_scale_space_file(std::string path, int i, int j){
+    char fname_ext[5];
+    sprintf(fname_ext, "%02d%02d", i, j);
+    path += std::string(fname_ext) + ".png";
+
+    return path;
+}
+
+void generate_scale_space_rgb(){
+
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
+    std::string to_folder {"../../test-database/scale_space/"};
+    png_dims dims = getDims(from_file);
+    PixelMap<png_byte> src(dims.height, dims.width, dims.channels);
+    read_png_file(from_file, src);
+    BitMapRGB bitmap(src);
+
+    int div_h = 1;
+    int div_w = 1;
+    for(int i = 0; i < 4; ++i){
+
+        double sd = std::sqrt(2)/2.0;
+        for(int j = 0; j < 5; ++j){
+            BitMapRGB rescaled(dims.height/div_h, dims.width/div_w);
+            rescale::bicubic(rescaled, bitmap);
+
+            size_t k_w = std::ceil(sd * 6);
+            Kernel1D<float> ker(k_w, src.getChannels(), sd);
+            BitMapRGB output(dims.height/div_h, dims.width/div_w);
+            fft(output, rescaled, ker);
+
+            sd *= std::sqrt(2);
+            write_png_file(get_scale_space_file(to_folder, i, j), output);
+        }
+
+        div_h *= 2;
+        div_w *= 2;
+    }
+}
+
+void generate_DoG(){
+    std::string from_folder {"../../test-database/scale_space/"};
+    std::string to_folder {"../../test-database/scale_space/DoG/"};
+
+    int div_h = 1;
+    int div_w = 1;
+    for(int i = 0; i < 3; ++i){
+
+        double sd = std::sqrt(2)/2.0;
+        for(int j = 0; j < 3; ++j){
+            png_dims dims = getDims(get_scale_space_file(from_folder, i, j));
+            
+            PixelMap<png_byte> curr(dims.height, dims.width, dims.channels);
+            PixelMap<png_byte> next(dims.height, dims.width, dims.channels);
+
+            read_png_file(get_scale_space_file(from_folder, i, j), curr);
+            read_png_file(get_scale_space_file(from_folder, i, j+1), next);
+
+            BitMapRGB bitmap_curr(curr);
+            BitMapRGB bitmap_next(next);
+
+            BitMapRGB bitmap_curr_rescaled(dims.height/div_h, dims.width/div_w);
+            BitMapRGB bitmap_next_rescaled(dims.height/div_h, dims.width/div_w);
+            rescale::bicubic(bitmap_curr_rescaled, bitmap_curr);
+            rescale::bicubic(bitmap_next_rescaled, bitmap_next);
+
+
+            size_t k_w_curr = std::ceil(sd * 6);
+            size_t k_w_next = std::ceil(sd * std::sqrt(2) * 6);
+            Kernel1D<float> ker_curr(k_w_curr, dims.channels, sd);
+            Kernel1D<float> ker_next(k_w_next, dims.channels, sd * std::sqrt(2));
+            
+            BitMapRGB blurred_curr(dims.height/div_h, dims.width/div_w);
+            BitMapRGB blurred_next(dims.height/div_h, dims.width/div_w);
+
+            fft(blurred_curr, bitmap_curr_rescaled, ker_curr);
+            fft(blurred_next, bitmap_next_rescaled, ker_next);
+
+            blurred_curr.subtract(blurred_next);
+
+            sd *= std::sqrt(2);
+            write_png_file(get_scale_space_file(to_folder, i, j), blurred_curr);
+        }
+
+        div_h *= 2;
+        div_w *= 2;
+    }
+}
+
 #include<vector>
 void speedtests(){
     /**
@@ -687,6 +776,53 @@ void speedtests(){
     printf("Mean time: %f\n", (res/iters));
 }
 
+float transfer_dog_to_alpha(){
+    Timer<nano_t> timer;
+
+    std::string_view from_file {"../../test-database/original/000069_left.png"};
+    std::string_view to_file {"../../test-database/diff_of_gaussians_rgba.png"};
+
+    png_dims dims = getDims(from_file);
+    PixelMap<png_byte> pixelmap(dims.height, dims.width, dims.channels);
+    read_png_file(from_file, pixelmap);
+    
+    BitMapRGB src(pixelmap);
+    BitMapRGB temp(dims.height, dims.width);
+    BitMapRGB dest(dims.height, dims.width);
+    
+    double sigma = 0.2;
+    timer.reset();
+    DoG(dest, temp, src, sigma, 2*sigma);
+    uint64_t elapsed = timer.elapsed();
+    
+    printf("Computation time (diff. of gaussians bitmap - rgb): %.5f s\n", (elapsed*1e-9f));
+
+    PixelMap<png_byte> res(dims.height, dims.width, 4);
+
+    // x_new = (x - min)*(max_des - min_des)/(max-min)+min_des
+    uint32_t max = 0;
+    uint32_t min = 256;
+    for(size_t i = 0; i < dims.height; ++i){
+        for(size_t j = 0; j < dims.width; ++j){
+            uint32_t avg = (dest.get(i, j, 0) + dest.get(i, j, 1) + dest.get(i, j, 2)) / 3;
+            res(i, j, 3) = avg;
+            max = (avg>max) ? avg : max;
+            min = (avg<min) ? avg : min;
+        }
+    }
+    for(size_t i = 0; i < dims.height; ++i){
+        for(size_t j = 0; j < dims.width; ++j){
+            uint32_t norm = (res(i, j, 3) - min) * 255 / (max - min);
+            res(i, j, 3) = norm;
+            res(i, j, 0) = norm;
+            res(i, j, 1) = norm;
+            res(i, j, 2) = norm;
+        }
+    }
+    write_png_file(to_file, res);
+    return (elapsed*1e-9f);
+}
+
 int main(){
     /**
      * FFT
@@ -696,7 +832,7 @@ int main(){
      * Cooley turkey algorithm
      * https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
     */
-    
+    /*
     nearestNeighbor();
     nearestNeighbor_bitmap_rgba();
     nearestNeighbor_bitmap_rgb();
@@ -709,20 +845,23 @@ int main(){
     bicubic_bitmap_rgba();
     bicubic_bitmap_rgb();
     
-    difference_of_gaussians();
-    difference_of_gaussians_rgba();
-    difference_of_gaussians_rgb();
-    
     trilinear();
     trilinear_rgba();
     trilinear_rgb();
-    
+    */
     /*
     plot_mipmap();
     generate_goomer();
     */
+    difference_of_gaussians();
+    difference_of_gaussians_rgba();
+    difference_of_gaussians_rgb();
+
     blurr();
     blurr_rgb();
     blurr_rgba();
+    
+    //generate_scale_space_rgb();
+    //generate_DoG();
     return 0;
 }

@@ -185,7 +185,7 @@ void write_png_file(std::string_view file_name, const PixelMap<COL_T>& pixelmap)
     // write bytes
     if(setjmp(png_jmpbuf(png_ptr))) abort();
     for(size_t y = 0; y < pixelmap.getHeight(); ++y)
-        png_write_row(png_ptr, reinterpret_cast<png_const_bytep>(pixelmap.rowBegin(y)));
+        png_write_row(png_ptr, const_cast<png_const_bytep>(pixelmap.rowBegin(y)));
     // end write
     if(setjmp(png_jmpbuf(png_ptr))) abort();
     png_write_end(png_ptr, NULL);
