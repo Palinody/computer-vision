@@ -1,7 +1,5 @@
 
 /**
-<<<<<<< HEAD
-=======
 TODO:
     fix "faster" FFTs
     edit: rgb - rgba should be alright. Correct Pixelmap "faster" fft
@@ -10,7 +8,6 @@ TODO:
 
 
 /**
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
  * http://libpng.org/pub/png/libpng-1.0.3-manual.html
  * http://www.libpng.org/pub/png/spec/1.2/PNG-Rationale.html#R.Byte-order
    Color    Allowed    Interpretation
@@ -84,8 +81,6 @@ int main()
     printf("pixel uint64_t with offset\n");
     print_binary(offset, 0);
     return 0;
-<<<<<<< HEAD
-=======
 }
 
 
@@ -338,5 +333,4 @@ int main()
     printf("possibilities: %ld\n", (std::min(k_size, img_size)));
 
     return 0;
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 }

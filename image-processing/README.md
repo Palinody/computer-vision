@@ -1,17 +1,6 @@
 > C++ repository used for educational purposes in computer vision. Contains a variety of algorithms that will be used for a SLAM project using [SIFT](https://en.wikipedia.org/wiki/Scale-invariant_feature_transform) algorithm. The ultimate goal of the project is to launch it on embedded systems (smartphones, robots)
 
 ### TODO
-<<<<<<< HEAD
-fix: clang++
-fix: fft works with images with limited size on my machine: approx. 900x900x4 (no memory optim.)
-add: gray and gray + alpha bitmaps (rest of lib already took them into consideration, no mod. needed)
-do: all the rest...
-
-
-### Compilation
-```sh
-$ g++-10 -std=c++20 -Wall -O3 -march=native -o main main.cpp
-=======
 
 add: gray and gray + alpha bitmaps (rest of lib already took them into consideration, no mod. needed)
 
@@ -32,28 +21,18 @@ $ clang++-10 -std=c++20 -Wall -pedantic -O3 -ffast-math -march=native -o main ma
 ### Execution
 
 ```
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 $ ./a.out
 ```
 
 ### Requirements
 - c++-20
-<<<<<<< HEAD
-- g++-10 (recom. bec. only compiler tested and we need c++-20)
-=======
 - g++-10 or clang++-10
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 - [libpng](https://github.com/glennrp/libpng)
 
 ### Custom containers
 - PixelMap<png_byte>: color channels read/wrote via indexing
-<<<<<<< HEAD
-- BitMapRGBA: color channels read/wrote via bit shifting (channels fixed to 4)
-- BitMapRGB: color channels read/wrote via bit shifting (channels fixed to 3)
-=======
 - BitMapRGBA: color channels read/wrote via bit shifting (channels fixed to 4, type fixed to uint32_t)
 - BitMapRGB: color channels read/wrote via bit shifting (channels fixed to 3, type fixed to uint32_t)
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 - MipMap: Pyramid of previous image containers
 
 ### Streams

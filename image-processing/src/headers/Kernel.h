@@ -5,11 +5,7 @@
 #include <memory>
 
 // non random distributions
-<<<<<<< HEAD
-enum Distr{ GAUSS };
-=======
 enum Distr : unsigned char{ GAUSS };
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 
 template<typename T>
 class Kernel1D{
@@ -75,8 +71,6 @@ void Kernel1D<T>::print() const{
         printf("},\n");
     }
     printf("\n");
-<<<<<<< HEAD
-=======
 }
 //////////////////////////////////////////////////////
 //                  kernel mask                     //
@@ -174,5 +168,4 @@ const size_t& ker_mask<Buf>::operator()(size_t img_idx, size_t k) const requires
         img_idx : ((_size-1-img_idx < _k_size-_k_idx) ? 
             _masks - (_size-img_idx) : _k_idx);
     return _ker_indices_update[k+m*_k_size];
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 }

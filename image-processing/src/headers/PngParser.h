@@ -8,10 +8,7 @@
 #include <cstdarg>
 #include <cassert>
 #include <memory>
-<<<<<<< HEAD
-=======
 #include <limits.h>     // CHAR_BIT
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
 // debug
 #include <iostream>
 // sudo apt-get install libpng-dev
@@ -181,22 +178,14 @@ void write_png_file(std::string_view file_name, const PixelMap<COL_T>& pixelmap)
     if(setjmp(png_jmpbuf(png_ptr))) abort();
     png_set_IHDR(png_ptr, info_ptr, 
                 pixelmap.getWidth(), pixelmap.getHeight(),
-<<<<<<< HEAD
-                (8*sizeof(COL_T)), png_utils.col_type[pixelmap.getChannels()-1], 
-=======
                 (CHAR_BIT*sizeof(COL_T)), png_utils.col_type[pixelmap.getChannels()-1], 
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
                 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_write_info(png_ptr, info_ptr);
         
     // write bytes
     if(setjmp(png_jmpbuf(png_ptr))) abort();
     for(size_t y = 0; y < pixelmap.getHeight(); ++y)
-<<<<<<< HEAD
         png_write_row(png_ptr, reinterpret_cast<png_const_bytep>(pixelmap.rowBegin(y)));
-=======
-        png_write_row(png_ptr, const_cast<png_const_bytep>(pixelmap.rowBegin(y)));
->>>>>>> 492211a16baa0b5298ebe757f40523c14a6558bc
     // end write
     if(setjmp(png_jmpbuf(png_ptr))) abort();
     png_write_end(png_ptr, NULL);
